@@ -112,7 +112,7 @@ public class Transmissor {
     //CamadaDeEnlaceTransmissoraControleDeErro(quadro);
     //CamadaDeEnlaceTransmissoraControleDeFluxo(quadro);
     //chama proxima camada
-    //CamadaFisicaTransmissora(quadroEnquadrado);
+    CamadaFisicaTransmissora(quadroEnquadrado);
   }//fim do metodo CamadaEnlaceDadosTransmissora
 
   public int[] CamadaEnlaceDadosTransmissoraEnquadramento (int quadro[]) {
@@ -130,7 +130,7 @@ public class Transmissor {
         quadroEnquadrado = CamadaEnlaceDadosTransmissoraEnquadramentoInsercaoDeBits(quadro);
         break;
       case 3: // violacao da camada fisica
-        //quadroEnquadrado = CamadaEnlaceDadosTransmissoraEnquadramentoViolacaoDaCamadaFisica(quadro);
+        quadroEnquadrado = CamadaEnlaceDadosTransmissoraEnquadramentoViolacaoDaCamadaFisica(quadro);
         break;
     }// fim do switch/case
     return quadroEnquadrado;
@@ -524,6 +524,13 @@ public class Transmissor {
     System.out.println();
     return quadroEnquadrado;    
   }
+
+  public int[] CamadaEnlaceDadosTransmissoraEnquadramentoViolacaoDaCamadaFisica (int quadro []) {
+    // Decodificacao realizada na Camada Fisica
+    // Uma vez que ele viola a camada fisica, a decodificacao deve ser feita la
+    // quando passamos o algoritmo de binario para manchester ou Manchester Differencial
+    return quadro;
+  }//fim do metodo CamadaEnlaceDadosReceptoraViolacaoDaCamadaFisica
   
   /* ***************************************************************
   * Metodo: CamadaFisicaTransmissora.
@@ -547,6 +554,7 @@ public class Transmissor {
     }//fim do switch/case
     meioDeComunicao.setQtdCaracters(qtdCaracters);
     meioDeComunicao.setTipoDeCodificacao(tipoDeCodificacao);
+    meioDeComunicao.setTipoDeEnquadramento(tipoDeEnquadramento);
     meioDeComunicao.meioDeComunicacao(fluxoBrutoDeBits);
   }
   
@@ -616,7 +624,16 @@ public class Transmissor {
       System.out.println(String.format("%32s", Integer.toBinaryString(fluxoCodificacaoMancherster[i])).replace(' ', '0'));
     }
     */
-    return fluxoCodificacaoMancherster;
+    //Verifica Se o enquadramento selecionado foi a violacao da camada fisica, caso tenha sido realiza o enquadramento
+    // antes de enviar para o meio de comunicacao
+    int quadroEnquadrado[];
+		if(tipoDeEnquadramento == 3){
+			 quadroEnquadrado = CodificacaoViolacaoCamadaFisica(fluxoCodificacaoMancherster);
+		}
+    else{
+      quadroEnquadrado = fluxoCodificacaoMancherster;
+    }
+    return quadroEnquadrado;
   }//fim do metodo CamadaFisicaTransmissoraCodificacaoManchester
   
   /* ***************************************************************
@@ -706,8 +723,139 @@ public class Transmissor {
       System.out.println(String.format("%32s", Integer.toBinaryString(fluxoCodificacaoManchersterDiferencial[i])).replace(' ', '0'));
     }
     */
-    return fluxoCodificacaoManchersterDiferencial;
+    //Verifica Se o enquadramento selecionado foi a violacao da camada fisica, caso tenha sido realiza o enquadramento
+    // antes de enviar para o meio de comunicacao
+    int quadroEnquadrado[];
+		if(tipoDeEnquadramento == 3){
+			 quadroEnquadrado = CodificacaoViolacaoCamadaFisica(fluxoCodificacaoManchersterDiferencial);
+		}
+    else{
+      quadroEnquadrado = fluxoCodificacaoManchersterDiferencial;
+    }
+    return quadroEnquadrado;
   }//fim do CamadaFisicaTransmissoraCodificacaoManchesterDiferencial
 
+  public int[] CodificacaoViolacaoCamadaFisica(int[] quadro) {
+    int qtdFlags = 2*((int) Math.ceil((double) qtdCaracters / 3));  //calcula a quantdidade de flags que sera inserida
+    int qtdBitsTotais = (8*qtdCaracters*2) + (qtdFlags*2); //mudar para qtdFlags*2 caso a flag seja 11
+    int tamanhoQuadroEnquadrado = 0;
+    if (qtdBitsTotais % 32 == 0){
+      tamanhoQuadroEnquadrado = qtdBitsTotais / 32; // Index do Array ENQUADRADO
+    }
+    else{
+      tamanhoQuadroEnquadrado = qtdBitsTotais / 32 + 1;
+    }
+    // Criando Novo quadro com o novo tamanhoint [] quadroEnquadrado = new int[quadro.length*3];
+    int [] quadroEnquadrado = new int[tamanhoQuadroEnquadrado];
+    String flag = "11";
+    int deslocaQuadoEnquadrado = 31;
+    int indexQuadroEnquadrado = 0;
+    int indiceCaracter = 0;
+    int indexQuadro = 0;
+    int deslocaQuadro = 31;
+    int contaCaracteres = 0;
+
+    //insere o primeiro flag
+    for (int i = 0; i < 2; i++){
+      //System.out.println("Inserindo");
+      char num = flag.charAt(indiceCaracter);
+      //System.out.println(num);
+      if (num == '1'){
+        //System.out.println("colocou");
+        quadroEnquadrado[indexQuadroEnquadrado] = quadroEnquadrado[indexQuadroEnquadrado] | (1 << deslocaQuadoEnquadrado);
+      }
+      indiceCaracter++; 
+      deslocaQuadoEnquadrado--;
+      if (deslocaQuadoEnquadrado < 0){
+        deslocaQuadoEnquadrado = 31;
+        indexQuadroEnquadrado++;        
+        /*
+        if (indexQuadroEnquadrado>=quadroEnquadrado.length){
+          break;
+        }
+        */
+      }
+    }
+    indiceCaracter = 0;
+
+    for (int i = 0; i < 16*qtdCaracters; i++){ //percorre o total de bits da qtd de caracters
+      int bit = (quadro[indexQuadro] >> deslocaQuadro) & 1;     
+      //insere os bits de quadro em quadroEnquadrado 
+      if (bit == 1){
+        quadroEnquadrado[indexQuadroEnquadrado] = quadroEnquadrado[indexQuadroEnquadrado] | (1 << deslocaQuadoEnquadrado);
+      }
+      deslocaQuadoEnquadrado--;
+      if (deslocaQuadoEnquadrado < 0){
+        deslocaQuadoEnquadrado = 31;
+        indexQuadroEnquadrado++;        
+        /*
+        if (indexQuadroEnquadrado>=quadroEnquadrado.length){
+          break;
+        }
+        */
+      }
+      if ((i+1)%16==0){
+        contaCaracteres++;
+      }
+      //insere a flag a cada 3 caracters
+      if ((i+1)%48==0 && contaCaracteres != qtdCaracters){ //se leu tres caracteres e o proximo nao e o utlimo, entao insere flag do proximo tambem
+        for (int k = 0; k < 2; k++){
+          for (int j = 0; j < 2; j++){
+            char num = flag.charAt(indiceCaracter);
+            if (num == '1'){
+              quadroEnquadrado[indexQuadroEnquadrado] = quadroEnquadrado[indexQuadroEnquadrado] | (1 << deslocaQuadoEnquadrado);
+            }
+            indiceCaracter++; 
+            deslocaQuadoEnquadrado--;
+            if (deslocaQuadoEnquadrado < 0){
+              deslocaQuadoEnquadrado = 31;
+              indexQuadroEnquadrado++;        
+              /*
+              if (indexQuadroEnquadrado>=quadroEnquadrado.length){
+                break;
+              }
+              */
+            }
+          }
+          indiceCaracter = 0;
+        }
+      }
+      else if(contaCaracteres == qtdCaracters){ //se chegou no ultimo caracter insere apenas uma flag
+        for (int j = 0; j < 2; j++){
+          char num = flag.charAt(indiceCaracter);
+          if (num == '1'){
+            quadroEnquadrado[indexQuadroEnquadrado] = quadroEnquadrado[indexQuadroEnquadrado] | (1 << deslocaQuadoEnquadrado);
+          }
+          indiceCaracter++; 
+          deslocaQuadoEnquadrado--;
+          if (deslocaQuadoEnquadrado < 0){
+            deslocaQuadoEnquadrado = 31;
+            indexQuadroEnquadrado++;        
+            /*
+            if (indexQuadroEnquadrado>=quadroEnquadrado.length){
+              break;
+            }
+            */
+          }
+        }
+        indiceCaracter = 0;
+      }
+      deslocaQuadro--;
+      if (deslocaQuadro < 0){
+        deslocaQuadro = 31;
+        indexQuadro++;
+        if (indexQuadro >= quadro.length){
+          break;
+        }
+      }
+    }
+    
+    for (int i = 0; i < quadroEnquadrado.length; i++){
+      System.out.println(String.format("%32s", Integer.toBinaryString(quadroEnquadrado[i])).replace(' ', '0'));
+    }
+    System.out.println();
+
+    return quadroEnquadrado;
+  }
 
 }

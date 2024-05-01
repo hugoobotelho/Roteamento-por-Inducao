@@ -44,17 +44,33 @@ public class Principal extends Application {
     opcao2.setToggleGroup(toggleGroup);
     opcao3.setToggleGroup(toggleGroup);
 
+    //Criação dos ToggleButtons para as opções de enquadramento
+    ToggleButton contagemDeCaracteres = new ToggleButton("Contagem de Caracteres");
+    ToggleButton insercaoDeBytes = new ToggleButton("Insercao de Bytes");
+    ToggleButton insercaoDeBits = new ToggleButton("Insersao de Bits");
+    ToggleButton violacaoDaCamadaFisica = new ToggleButton("Violacao da Camada Fisica");
+
+    //Criação de um ToggleGroup para garantir que apenas um botão seja selecionado
+    ToggleGroup toggleGroupEnquadramento = new ToggleGroup();
+    contagemDeCaracteres.setToggleGroup(toggleGroupEnquadramento);
+    insercaoDeBytes.setToggleGroup(toggleGroupEnquadramento);
+    insercaoDeBits.setToggleGroup(toggleGroupEnquadramento);
+    violacaoDaCamadaFisica.setToggleGroup(toggleGroupEnquadramento);
+
     //Listener para a mudança de seleção dos ToggleButtons
     toggleGroup.selectedToggleProperty().addListener((observable, oldValue, newValue) -> {
       if (newValue != null) {
         if (newValue.equals(opcao1)){
           transmissor.tipoDeCodificacao(0);
+          violacaoDaCamadaFisica.setDisable(true);
         }
         else if (newValue.equals(opcao2)){
           transmissor.tipoDeCodificacao(1);
+          violacaoDaCamadaFisica.setDisable(false);
         }
         else if (newValue.equals(opcao3)){
           transmissor.tipoDeCodificacao(2);
+          violacaoDaCamadaFisica.setDisable(false);
         }
         //Reseta as cores de todos os botões
         opcao1.setStyle("#FFFFFF; -fx-font-size: 15px; -fx-padding: 10; -fx-background-radius: 10; -fx-border-color: #435D7A; -fx-border-radius: 10; -fx-text-fill: #435D7A");
@@ -72,33 +88,25 @@ public class Principal extends Application {
     vboxOpoces.setLayoutX(430);
     vboxOpoces.setLayoutY(540);   
     
-    //Criação dos ToggleButtons para as opções de enquadramento
-    ToggleButton contagemDeCaracteres = new ToggleButton("Contagem de Caracteres");
-    ToggleButton insercaoDeBytes = new ToggleButton("Insercao de Bytes");
-    ToggleButton insercaoDeBits = new ToggleButton("Insersao de Bits");
-    ToggleButton violacaoDaCamadaFisica = new ToggleButton("Violacao da Camada Fisica");
-
-    //Criação de um ToggleGroup para garantir que apenas um botão seja selecionado
-    ToggleGroup toggleGroupEnquadramento = new ToggleGroup();
-    contagemDeCaracteres.setToggleGroup(toggleGroupEnquadramento);
-    insercaoDeBytes.setToggleGroup(toggleGroupEnquadramento);
-    insercaoDeBits.setToggleGroup(toggleGroupEnquadramento);
-    violacaoDaCamadaFisica.setToggleGroup(toggleGroupEnquadramento);
 
     //Listener para a mudança de seleção dos ToggleButtons
     toggleGroupEnquadramento.selectedToggleProperty().addListener((observable, oldValue, newValue) -> {
       if (newValue != null) {
         if (newValue.equals(contagemDeCaracteres)){
           transmissor.tipoDeEnquadramento(0);
+          opcao1.setDisable(false);
         }
         else if (newValue.equals(insercaoDeBytes)){
           transmissor.tipoDeEnquadramento(1);
+          opcao1.setDisable(false);
         }
         else if (newValue.equals(insercaoDeBits)){
           transmissor.tipoDeEnquadramento(2);
+          opcao1.setDisable(false);
         }
         else if (newValue.equals(violacaoDaCamadaFisica)){
           transmissor.tipoDeEnquadramento(3);
+          opcao1.setDisable(true);
         }
         //Reseta as cores de todos os botões
         contagemDeCaracteres.setStyle("#FFFFFF; -fx-font-size: 15px; -fx-padding: 10; -fx-background-radius: 10; -fx-border-color: #435D7A; -fx-border-radius: 10; -fx-text-fill: #435D7A");

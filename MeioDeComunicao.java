@@ -17,6 +17,7 @@ public class MeioDeComunicao {
   private Receptor receptor = new Receptor();
   private int qtdCaracters = 0;
   private int tipoDeCodificacao = 0;
+  private int tipoDeEnquadramento = 0;
   
   /* ***************************************************************
   * Metodo: setQtdCaracters.
@@ -38,6 +39,10 @@ public class MeioDeComunicao {
 
   public void setTipoDeCodificacao(int tipoDeCodificacao){
     this.tipoDeCodificacao = tipoDeCodificacao;
+  }
+
+  public void setTipoDeEnquadramento(int tipoDeEnquadramento){
+    this.tipoDeEnquadramento = tipoDeEnquadramento;
   }
 
   /* ***************************************************************
@@ -239,7 +244,8 @@ public class MeioDeComunicao {
     //chama proxima camada
     receptor.setQtdCaracters(qtdCaracters);
     receptor.setTipoDeCodificacao(tipoDeCodificacao);
-    receptor.CamadaFisicaReceptora(fluxoBrutoDeBitsPontoB);
+    receptor.setTipoDeEnquadramento(tipoDeEnquadramento);
+    //receptor.CamadaFisicaReceptora(fluxoBrutoDeBitsPontoB);
     }).start();
   
   }//fim do metodo MeioDeTransmissao

@@ -14,6 +14,7 @@ import javafx.scene.control.TextArea;
 public class Receptor {
   private int qtdCaracters = 0;
   private int tipoDeDecodificacao = 0;
+  private int tipoDeEnquadramento = 0;
   TextArea text = new TextArea();
 
   public Receptor(){
@@ -52,6 +53,10 @@ public class Receptor {
   *************************************************************** */
   public void setTipoDeCodificacao(int codificacao){
     this.tipoDeDecodificacao = codificacao;
+  }
+
+  public void setTipoDeEnquadramento(int tipoDeEnquadramento){
+    this.tipoDeEnquadramento= tipoDeEnquadramento;
   }
   
   /* ***************************************************************
