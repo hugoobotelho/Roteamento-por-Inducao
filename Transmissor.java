@@ -16,6 +16,7 @@ public class Transmissor {
   private int qtdCaracters;
   private int tipoDeCodificacao;
   private int tipoDeEnquadramento;
+  private int qtdBitsTotais = 0;
   MeioDeComunicao meioDeComunicao = new MeioDeComunicao();
 
   public void tipoDeCodificacao(int n){
@@ -162,6 +163,7 @@ public class Transmissor {
         else{
           indiceCaracter++;
         }
+        qtdBitsTotais++;
       }
       else{
         //System.out.println("Vai pegar os bits de quadro");
@@ -185,7 +187,6 @@ public class Transmissor {
         }
       }
     }
-
     for (int i = 0; i < quadroEnquadrado.length; i++){
       System.out.println(String.format("%32s", Integer.toBinaryString(quadroEnquadrado[i])).replace(' ', '0'));
     }
@@ -227,6 +228,7 @@ public class Transmissor {
         }
         */
       }
+      qtdBitsTotais++;
     }
     indiceCaracter = 0; 
     //insere a informacao de controle ESC caso a mensagem tenha uma flag ou uma esc fake, caso contrario, apenas insere o caracter
@@ -255,6 +257,7 @@ public class Transmissor {
             }
             */
           }
+          qtdBitsTotais++;
         }
         indiceCaracter = 0; 
       }
@@ -299,6 +302,7 @@ public class Transmissor {
             }
             */
           }
+          qtdBitsTotais++;
         }
         indiceCaracter = 0;
         /*
@@ -379,6 +383,7 @@ public class Transmissor {
             }
             */
           }
+          qtdBitsTotais++;
         }
         indiceCaracter = 0; 
       }
@@ -422,6 +427,7 @@ public class Transmissor {
         }
         */
       }
+      qtdBitsTotais++;
     }
     indiceCaracter = 0;
 
@@ -431,6 +437,7 @@ public class Transmissor {
         contaBitsUm++;
         if(contaBitsUm == 6){
           //inserir zero
+          qtdBitsTotais++;
           //quadroEnquadrado[indexQuadroEnquadrado] = quadroEnquadrado[indexQuadroEnquadrado] | (0 << deslocaQuadoEnquadrado); //nao precisa inseri, basta pular pois o zero ja esta la     
           deslocaQuadoEnquadrado--;
           if (deslocaQuadoEnquadrado < 0){
@@ -484,6 +491,7 @@ public class Transmissor {
               }
               */
             }
+            qtdBitsTotais++;
           }
           indiceCaracter = 0;
         }
@@ -505,6 +513,7 @@ public class Transmissor {
             }
             */
           }
+          qtdBitsTotais++;
         }
         indiceCaracter = 0;
       }
@@ -543,18 +552,26 @@ public class Transmissor {
     int [] fluxoBrutoDeBits = new int[0]; //ATENÇÃO: trabalhar com BITS!!!
     switch (tipoDeCodificacao) {
     case 0 : //codificao binaria
+    qtdBitsTotais = qtdBitsTotais + (8*qtdCaracters);
     fluxoBrutoDeBits = CamadaFisicaTransmissoraCodificacaoBinaria(quadro);
     break;
     case 1 : //codificacao manchester
+    qtdBitsTotais = qtdBitsTotais + (8*qtdCaracters);
     fluxoBrutoDeBits = CamadaFisicaTransmissoraCodificacaoManchester(quadro);
+    qtdBitsTotais = 2*qtdBitsTotais;
     break;
     case 2 : //codificacao manchester diferencial
+    qtdBitsTotais = qtdBitsTotais + (8*qtdCaracters);
     fluxoBrutoDeBits = CamadaFisicaTransmissoraCodificacaoManchesterDiferencial(quadro);
+    qtdBitsTotais = 2*qtdBitsTotais; //se o enqaudramento for violacao de camada, vai dar uma qtd de bits a mais, mudar depois!
     break;
     }//fim do switch/case
     meioDeComunicao.setQtdCaracters(qtdCaracters);
     meioDeComunicao.setTipoDeCodificacao(tipoDeCodificacao);
     meioDeComunicao.setTipoDeEnquadramento(tipoDeEnquadramento);
+    System.out.println(qtdBitsTotais);
+    meioDeComunicao.setQtdBitsTotais(qtdBitsTotais);
+    qtdBitsTotais = 0;
     meioDeComunicao.meioDeComunicacao(fluxoBrutoDeBits);
   }
   
@@ -583,47 +600,50 @@ public class Transmissor {
 
   public int[] CamadaFisicaTransmissoraCodificacaoManchester (int quadro []) {
     int [] fluxoCodificacaoMancherster = new int [quadro.length * 2]; //(qtdCaracters+1)/2
+    int deslocaFluxo = 31;
     int indexFLuxo = 0;
-    int posBit = 31;
-    int fim = 0;
-    for (int i = 0; i < quadro.length; i++){
-      for (int j = 31; j >= fim; j--) {
-        int bit = (quadro[i] >> j) & 1;
-
-        if (bit == 1){
-          fluxoCodificacaoMancherster[indexFLuxo] = fluxoCodificacaoMancherster[indexFLuxo] | (1 << posBit);
-          posBit--;
-          fluxoCodificacaoMancherster[indexFLuxo] = fluxoCodificacaoMancherster[indexFLuxo] | (0 << posBit);
+    int deslocaQuadro = 31;
+    int indexQuadro = 0;
+    for (int i = 0; i < qtdBitsTotais; i++) {
+      int bit = (quadro[indexQuadro] >> deslocaQuadro) & 1;
+      if (bit == 1){
+        fluxoCodificacaoMancherster[indexFLuxo] = fluxoCodificacaoMancherster[indexFLuxo] | (1 << deslocaFluxo);
+        deslocaFluxo--;
+        if (deslocaFluxo < 0){
+          deslocaFluxo = 31;
+          indexFLuxo++;
         }
-        else{
-          fluxoCodificacaoMancherster[indexFLuxo] = fluxoCodificacaoMancherster[indexFLuxo] | (0 << posBit);
-          posBit--;
-          fluxoCodificacaoMancherster[indexFLuxo] = fluxoCodificacaoMancherster[indexFLuxo] | (1 << posBit);
+        fluxoCodificacaoMancherster[indexFLuxo] = fluxoCodificacaoMancherster[indexFLuxo] | (0 << deslocaFluxo);
+        deslocaFluxo--;
+        if (deslocaFluxo < 0){
+          deslocaFluxo = 31;
+          indexFLuxo++;
         }
-        posBit--;
-        if (posBit <= 0){
-          posBit = 31;
-          if (indexFLuxo < fluxoCodificacaoMancherster.length-1){
-            indexFLuxo++;
-          }
+      }
+      else{
+        fluxoCodificacaoMancherster[indexFLuxo] = fluxoCodificacaoMancherster[indexFLuxo] | (0 << deslocaFluxo);
+        deslocaFluxo--;
+        if (deslocaFluxo < 0){
+          deslocaFluxo = 31;
+          indexFLuxo++;
         }
-        
-        if (qtdCaracters == (4*(i+1))-1){
-          fim = 8;
+        fluxoCodificacaoMancherster[indexFLuxo] = fluxoCodificacaoMancherster[indexFLuxo] | (1 << deslocaFluxo);
+        deslocaFluxo--;
+        if (deslocaFluxo < 0){
+          deslocaFluxo = 31;
+          indexFLuxo++;
         }
-        if (qtdCaracters == (4*(i+1))-2){
-          fim = 16;
-        }
-        if (qtdCaracters == (4*(i+1))-3){
-          fim = 24;
+      }
+      deslocaQuadro--;
+      if (deslocaQuadro < 0){
+        deslocaQuadro = 31;
+        indexQuadro++;
+        if (indexQuadro >= quadro.length){
+          break;
         }
       }
     }
-    /*
-    for (int i = 0; i < fluxoCodificacaoMancherster.length; i++){
-      System.out.println(String.format("%32s", Integer.toBinaryString(fluxoCodificacaoMancherster[i])).replace(' ', '0'));
-    }
-    */
+    
     //Verifica Se o enquadramento selecionado foi a violacao da camada fisica, caso tenha sido realiza o enquadramento
     // antes de enviar para o meio de comunicacao
     int quadroEnquadrado[];
@@ -632,6 +652,10 @@ public class Transmissor {
 		}
     else{
       quadroEnquadrado = fluxoCodificacaoMancherster;
+    }
+    System.out.println("Esse é o quadro codificado mancherster");
+    for (int i = 0; i < quadroEnquadrado.length; i++){
+      System.out.println(String.format("%32s", Integer.toBinaryString(quadroEnquadrado[i])).replace(' ', '0'));
     }
     return quadroEnquadrado;
   }//fim do metodo CamadaFisicaTransmissoraCodificacaoManchester
@@ -644,85 +668,138 @@ public class Transmissor {
   *************************************************************** */
 
   public int[] CamadaFisicaTransmissoraCodificacaoManchesterDiferencial(int quadro []){
-    int [] fluxoCodificacaoManchersterDiferencial = new int [quadro.length*2]; //(qtdCaracters+1)/2
+    int [] fluxoCodificacaoManchersterDiferencial = new int [quadro.length * 2]; //(qtdCaracters+1)/2
+    int deslocaFluxo = 31;
     int indexFLuxo = 0;
-    int posBit = 31;
-    int fim = 0;
+    int deslocaQuadro = 31;
+    int indexQuadro = 0;
     int sinalAnterior = 0;
-    for (int i = 0; i < quadro.length; i++){
-      for (int j = 31; j >= fim; j--) {
-        int bit = (quadro[i] >> j) & 1;
-        if (bit == 1){
-          if (j==31 && i == 0){
-          fluxoCodificacaoManchersterDiferencial[indexFLuxo] = fluxoCodificacaoManchersterDiferencial[indexFLuxo] | (1 << posBit);
-          posBit--;
-          fluxoCodificacaoManchersterDiferencial[indexFLuxo] = fluxoCodificacaoManchersterDiferencial[indexFLuxo] | (0 << posBit);
+    for (int i = 0; i < qtdBitsTotais; i++) {
+      int bit = (quadro[indexQuadro] >> deslocaQuadro) & 1;
+      if (bit == 1){
+        if (i == 0){
+          fluxoCodificacaoManchersterDiferencial[indexFLuxo] = fluxoCodificacaoManchersterDiferencial[indexFLuxo] | (1 << deslocaFluxo);
+          deslocaFluxo--;
+          sinalAnterior = 1;
+          if (deslocaFluxo < 0){
+            deslocaFluxo = 31;
+            indexFLuxo++;
           }
-          else{
-            //int num = posBit + 1;
-            //int sinalAnterior = (fluxoCodificacaoManchersterDiferencial[indexFLuxo]>>(num))&1;
-            if (sinalAnterior == 1){
-              fluxoCodificacaoManchersterDiferencial[indexFLuxo] = fluxoCodificacaoManchersterDiferencial[indexFLuxo] | (1 << posBit);
-              posBit--;
-              fluxoCodificacaoManchersterDiferencial[indexFLuxo] = fluxoCodificacaoManchersterDiferencial[indexFLuxo] | (0 << posBit);                  
-            }
-            else{
-              fluxoCodificacaoManchersterDiferencial[indexFLuxo] = fluxoCodificacaoManchersterDiferencial[indexFLuxo] | (0 << posBit);
-              posBit--;
-              fluxoCodificacaoManchersterDiferencial[indexFLuxo] = fluxoCodificacaoManchersterDiferencial[indexFLuxo] | (1 << posBit);  
-            }
-          }
-        }
-        else{
-          if (j==31 && i == 0){
-            fluxoCodificacaoManchersterDiferencial[indexFLuxo] = fluxoCodificacaoManchersterDiferencial[indexFLuxo] | (0 << posBit);
-            posBit--;
-            fluxoCodificacaoManchersterDiferencial[indexFLuxo] = fluxoCodificacaoManchersterDiferencial[indexFLuxo] | (1 << posBit);
-          }
-          else{
-            //int num = posBit + 1;
-            //int sinalAnterior = (fluxoCodificacaoManchersterDiferencial[indexFLuxo]>>(num))&1;
-            if (sinalAnterior == 1){
-              fluxoCodificacaoManchersterDiferencial[indexFLuxo] = fluxoCodificacaoManchersterDiferencial[indexFLuxo] | (0 << posBit);
-              posBit--;
-              fluxoCodificacaoManchersterDiferencial[indexFLuxo] = fluxoCodificacaoManchersterDiferencial[indexFLuxo] | (1 << posBit);                
-            }
-            else{
-              fluxoCodificacaoManchersterDiferencial[indexFLuxo] = fluxoCodificacaoManchersterDiferencial[indexFLuxo] | (1 << posBit);
-              posBit--;
-              fluxoCodificacaoManchersterDiferencial[indexFLuxo] = fluxoCodificacaoManchersterDiferencial[indexFLuxo] | (0 << posBit);    
-            }
-          }
-        }
-        posBit--;
-        if (posBit <= 0){
-          posBit = 31;
-          sinalAnterior = (fluxoCodificacaoManchersterDiferencial[indexFLuxo]<<(0))&1;
-          if (indexFLuxo < fluxoCodificacaoManchersterDiferencial.length-1){
+          fluxoCodificacaoManchersterDiferencial[indexFLuxo] = fluxoCodificacaoManchersterDiferencial[indexFLuxo] | (0 << deslocaFluxo);
+          deslocaFluxo--;
+          sinalAnterior = 0;
+          if (deslocaFluxo < 0){
+            deslocaFluxo = 31;
             indexFLuxo++;
           }
         }
         else{
-          int num = posBit + 1;
-          sinalAnterior = (fluxoCodificacaoManchersterDiferencial[indexFLuxo]>>num)&1;
-        }
-        
-        if (qtdCaracters == (4*(i+1))-1){
-          fim = 8;
-        }
-        if (qtdCaracters == (4*(i+1))-2){
-          fim = 16;
-        }
-        if (qtdCaracters == (4*(i+1))-3){
-          fim = 24;
+          //int num = deslocaFluxo + 1;
+          //int sinalAnterior = (fluxoCodificacaoManchersterDiferencial[indexFLuxo]>>(num))&1;
+          if (sinalAnterior == 1){
+            fluxoCodificacaoManchersterDiferencial[indexFLuxo] = fluxoCodificacaoManchersterDiferencial[indexFLuxo] | (1 << deslocaFluxo);
+            deslocaFluxo--;
+            sinalAnterior = 1;
+            if (deslocaFluxo < 0){
+              deslocaFluxo = 31;
+              indexFLuxo++;
+            }
+            fluxoCodificacaoManchersterDiferencial[indexFLuxo] = fluxoCodificacaoManchersterDiferencial[indexFLuxo] | (0 << deslocaFluxo);                  
+            deslocaFluxo--;
+            sinalAnterior = 0;
+            if (deslocaFluxo < 0){
+              deslocaFluxo = 31;
+              indexFLuxo++;
+            }
+          }
+          else{
+            fluxoCodificacaoManchersterDiferencial[indexFLuxo] = fluxoCodificacaoManchersterDiferencial[indexFLuxo] | (0 << deslocaFluxo);
+            deslocaFluxo--;
+            sinalAnterior = 0;
+            if (deslocaFluxo < 0){
+              deslocaFluxo = 31;
+              indexFLuxo++;
+            }
+            fluxoCodificacaoManchersterDiferencial[indexFLuxo] = fluxoCodificacaoManchersterDiferencial[indexFLuxo] | (1 << deslocaFluxo);  
+            deslocaFluxo--;
+            sinalAnterior = 1;
+            if (deslocaFluxo < 0){
+              deslocaFluxo = 31;
+              indexFLuxo++;
+            }
+          }
         }
       }
+      else{
+        if (i == 0){
+          fluxoCodificacaoManchersterDiferencial[indexFLuxo] = fluxoCodificacaoManchersterDiferencial[indexFLuxo] | (0 << deslocaFluxo);
+          deslocaFluxo--;
+          sinalAnterior = 0;
+          if (deslocaFluxo < 0){
+            deslocaFluxo = 31;
+            indexFLuxo++;
+          }
+          fluxoCodificacaoManchersterDiferencial[indexFLuxo] = fluxoCodificacaoManchersterDiferencial[indexFLuxo] | (1 << deslocaFluxo);
+          deslocaFluxo--;
+          sinalAnterior = 1;
+          if (deslocaFluxo < 0){
+            deslocaFluxo = 31;
+            indexFLuxo++;
+          }
+        }
+        else{
+          //int num = deslocaFluxo + 1;
+          //int sinalAnterior = (fluxoCodificacaoManchersterDiferencial[indexFLuxo]>>(num))&1;
+          if (sinalAnterior == 1){
+            fluxoCodificacaoManchersterDiferencial[indexFLuxo] = fluxoCodificacaoManchersterDiferencial[indexFLuxo] | (0 << deslocaFluxo);
+            deslocaFluxo--;
+            sinalAnterior = 0;
+            if (deslocaFluxo < 0){
+              deslocaFluxo = 31;
+              indexFLuxo++;
+            }
+            fluxoCodificacaoManchersterDiferencial[indexFLuxo] = fluxoCodificacaoManchersterDiferencial[indexFLuxo] | (1 << deslocaFluxo);                
+            deslocaFluxo--;
+            sinalAnterior = 1;
+            if (deslocaFluxo < 0){
+              deslocaFluxo = 31;
+              indexFLuxo++;
+            }
+          }
+          else{
+            fluxoCodificacaoManchersterDiferencial[indexFLuxo] = fluxoCodificacaoManchersterDiferencial[indexFLuxo] | (1 << deslocaFluxo);
+            deslocaFluxo--;
+            sinalAnterior = 1;
+            if (deslocaFluxo < 0){
+              deslocaFluxo = 31;
+              indexFLuxo++;
+            }
+            fluxoCodificacaoManchersterDiferencial[indexFLuxo] = fluxoCodificacaoManchersterDiferencial[indexFLuxo] | (0 << deslocaFluxo);    
+            deslocaFluxo--;
+            sinalAnterior = 0;
+            if (deslocaFluxo < 0){
+              deslocaFluxo = 31;
+              indexFLuxo++;
+            }
+          }
+        }
+      }
+      deslocaQuadro--;
+      if (deslocaQuadro < 0){
+        deslocaQuadro = 31;
+        indexQuadro++;
+        if (indexQuadro >= quadro.length){
+          break;
+        }
+      }
+
     }
-    /*
+    
+    System.out.println("Esse e o quadro codificado diferencial");
     for (int i = 0; i < fluxoCodificacaoManchersterDiferencial.length; i++){
       System.out.println(String.format("%32s", Integer.toBinaryString(fluxoCodificacaoManchersterDiferencial[i])).replace(' ', '0'));
     }
-    */
+    
     //Verifica Se o enquadramento selecionado foi a violacao da camada fisica, caso tenha sido realiza o enquadramento
     // antes de enviar para o meio de comunicacao
     int quadroEnquadrado[];
@@ -737,13 +814,13 @@ public class Transmissor {
 
   public int[] CodificacaoViolacaoCamadaFisica(int[] quadro) {
     int qtdFlags = 2*((int) Math.ceil((double) qtdCaracters / 3));  //calcula a quantdidade de flags que sera inserida
-    int qtdBitsTotais = (8*qtdCaracters*2) + (qtdFlags*2); //mudar para qtdFlags*2 caso a flag seja 11
+    int qtdBits = (8*qtdCaracters*2) + (qtdFlags*2); //mudar para qtdFlags*2 caso a flag seja 11
     int tamanhoQuadroEnquadrado = 0;
-    if (qtdBitsTotais % 32 == 0){
-      tamanhoQuadroEnquadrado = qtdBitsTotais / 32; // Index do Array ENQUADRADO
+    if (qtdBits % 32 == 0){
+      tamanhoQuadroEnquadrado = qtdBits / 32; // Index do Array ENQUADRADO
     }
     else{
-      tamanhoQuadroEnquadrado = qtdBitsTotais / 32 + 1;
+      tamanhoQuadroEnquadrado = qtdBits / 32 + 1;
     }
     // Criando Novo quadro com o novo tamanhoint [] quadroEnquadrado = new int[quadro.length*3];
     int [] quadroEnquadrado = new int[tamanhoQuadroEnquadrado];
@@ -775,6 +852,7 @@ public class Transmissor {
         }
         */
       }
+      qtdBitsTotais++;
     }
     indiceCaracter = 0;
 
@@ -816,6 +894,7 @@ public class Transmissor {
               }
               */
             }
+            qtdBitsTotais++;
           }
           indiceCaracter = 0;
         }
@@ -837,6 +916,7 @@ public class Transmissor {
             }
             */
           }
+          qtdBitsTotais++;
         }
         indiceCaracter = 0;
       }

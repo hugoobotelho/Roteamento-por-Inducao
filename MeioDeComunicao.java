@@ -18,6 +18,7 @@ public class MeioDeComunicao {
   private int qtdCaracters = 0;
   private int tipoDeCodificacao = 0;
   private int tipoDeEnquadramento = 0;
+  private int qtdBitsTotais;
   
   /* ***************************************************************
   * Metodo: setQtdCaracters.
@@ -43,6 +44,10 @@ public class MeioDeComunicao {
 
   public void setTipoDeEnquadramento(int tipoDeEnquadramento){
     this.tipoDeEnquadramento = tipoDeEnquadramento;
+  }
+
+  public void setQtdBitsTotais(int qtdBitsTotais){
+    this.qtdBitsTotais = qtdBitsTotais;
   }
 
   /* ***************************************************************
