@@ -15,6 +15,7 @@ public class Receptor {
   private int qtdCaracters = 0;
   private int tipoDeDecodificacao = 0;
   private int tipoDeEnquadramento = 0;
+  private int qtdBitsTotais = 0;
   TextArea text = new TextArea();
 
   public Receptor(){
@@ -59,6 +60,10 @@ public class Receptor {
     this.tipoDeEnquadramento= tipoDeEnquadramento;
   }
   
+  public void setQtdBitsTotais(int qtdBitsTotais){
+    this.qtdBitsTotais = qtdBitsTotais;
+  }
+  
   /* ***************************************************************
   * Metodo: CamadaFisicaReceptora.
   * Funcao: metodo para chamar a codificacao necessaria para decodificar a mensagem com base no tipo de codificacao e depois chamar a CamadaDeAplicacaoReceptora.
@@ -79,8 +84,30 @@ public class Receptor {
        break;
     }//fim do switch/case
     //chama proxima camada
-    CamadaDeAplicacaoReceptora(quadro);
+    CamadaEnlaceDadosReceptoraDesenquadramento(quadro);
+    //CamadaDeAplicacaoReceptora(quadro);
   }//fim do metodo CamadaFisicaTransmissora
+
+  public void CamadaEnlaceDadosReceptoraDesenquadramento (int quadro[]) {
+    
+    int quadroDesenquadrado[] = new int[0]; //mudar depois
+
+    switch (tipoDeEnquadramento) {
+      case 0: // contagem de caracteres
+        quadroDesenquadrado = CamadaEnlaceDadosReceptoraDesenquadramentoContagemDeCaracteres(quadro);
+        break;
+      case 1: // insercao de bytes
+        quadroDesenquadrado = CamadaEnlaceDadosReceptoraDesenquadramentoInsercaoDeBytes(quadro);
+        break;
+      case 2: // insercao de bits
+        //quadroDesennquadrado = CamadaEnlaceDadosTransmissoraEnquadramentoInsercaoDeBits(quadro);
+        break;
+      case 3: // violacao da camada fisica
+        //quadroDesennquadrado = CamadaEnlaceDadosTransmissoraEnquadramentoViolacaoDaCamadaFisica(quadro);
+        break;
+    }// fim do switch/case
+    CamadaDeAplicacaoReceptora(quadroDesenquadrado);
+  }// fim do metodo CamadaEnlaceTransmissoraEnquadramento
     
   /* ***************************************************************
   * Metodo: CamadaFisicaReceptoraDecodificacaoBinaria.
@@ -90,7 +117,9 @@ public class Receptor {
   *************************************************************** */
 
   public int[] CamadaFisicaReceptoraDecodificacaoBinaria(int fluxoBrutoDeBits []){
-    int [] quadro = new int[(qtdCaracters + 3)/4];
+    int [] quadro = new int[fluxoBrutoDeBits.length];
+    quadro = fluxoBrutoDeBits;
+    /*
     int indexQuadro = 0;
     for (int i = 0; i < fluxoBrutoDeBits.length; i++){
       for (int j = 31; j >= 0; j--){
@@ -99,10 +128,6 @@ public class Receptor {
       }
       indexQuadro++;
     }
-    /*
-    for (int i = 0; i < quadro.length; i++){
-      System.out.println("Esse e o quadro receptor codificacao binaria "+String.format("%32s", Integer.toBinaryString(quadro[i])).replace(' ', '0'));
-    }   
     */
     return quadro;
   }
@@ -114,39 +139,57 @@ public class Receptor {
   * Retorno: retornar o array decodificado.
   *************************************************************** */
   public int[] CamadaFisicaReceptoraDecodificacaoManchester(int fluxoBrutoDeBits []){
-    /*
-    for (int i = 0; i < fluxoBrutoDeBits.length; i++){
-      System.out.println("Esse e o fluxoBrutoDeBits receptor codificacao Mancherster "+String.format("%32s", Integer.toBinaryString(fluxoBrutoDeBits[i])).replace(' ', '0'));
-    }  
-    */
-    int [] quadro = new int[(qtdCaracters + 3)/4];
+    int [] quadro = new int[fluxoBrutoDeBits.length];
     int indexQuadro = 0;
-    int posBit = 31;
-    for (int i = 0; i < fluxoBrutoDeBits.length; i++){
-      for (int j = 31; j >= 0; j-=2){
-        int posAnterior = j;
-        int posSucessor = j-1;
-        int bitAnterior = (fluxoBrutoDeBits[i] >> posAnterior) & 1;
-        int bitSucessor = (fluxoBrutoDeBits[i]>> posSucessor) & 1;
-        //System.out.println("Bit anterior: " + bitAnterior + "\nBit sucessor: " + bitSucessor);
+    int deslocaQuadro = 31;
+    int indexFLuxo = 0;
+    int deslocaFluxo = 31;
+    for (int i = 0; i < qtdBitsTotais; i++){
+        int posAnterior = deslocaFluxo;
+        int posSucessor = deslocaFluxo-1;
+        int bitAnterior = (fluxoBrutoDeBits[indexFLuxo] >> posAnterior) & 1;
+        int bitSucessor = (fluxoBrutoDeBits[indexFLuxo]>> posSucessor) & 1;
         if (bitAnterior == 1 && bitSucessor == 0){
-          quadro[indexQuadro] = quadro[indexQuadro] | (1<<posBit);
+          quadro[indexQuadro] = quadro[indexQuadro] | (1<<deslocaQuadro);
+          deslocaQuadro--;
         }
         else if (bitAnterior == 0 && bitSucessor == 1){
-          quadro[indexQuadro] = quadro[indexQuadro] | (0<<posBit);                
+          quadro[indexQuadro] = quadro[indexQuadro] | (0<<deslocaQuadro); 
+          deslocaQuadro--;               
         }
-        posBit--;
-      }
-      if ((i+1)%2==0){
-        indexQuadro++;
-        posBit = 31;
-      }
+        else if (bitAnterior == 1 && bitSucessor == 1){ //igora o par 11 caso o enquadramento seja violacao de camada
+          i++;
+          /*
+          quadro[indexQuadro] = quadro[indexQuadro] | (1<<deslocaQuadro);
+          deslocaQuadro--;
+          if (deslocaQuadro < 0){
+            deslocaQuadro = 31;
+            indexQuadro++;
+          }
+          quadro[indexQuadro] = quadro[indexQuadro] | (1<<deslocaQuadro); 
+          */               
+        }
+        if (deslocaQuadro < 0){
+          deslocaQuadro = 31;
+          indexQuadro++;
+        }
+        deslocaFluxo-=2;
+        if (deslocaFluxo < 0){
+          deslocaFluxo = 31;
+          indexFLuxo++;
+        }
+        if (indexFLuxo >= fluxoBrutoDeBits.length || indexQuadro >= quadro.length){
+          break;
+        }
+      
     }
-    /*
+    
+    System.out.println("Esse e o quadro decodificado Mancherster");
     for (int i = 0; i < quadro.length; i++){
-      System.out.println("Esse e o quadro receptor codificacao Mancherster "+String.format("%32s", Integer.toBinaryString(quadro[i])).replace(' ', '0'));
-    } 
-    */  
+      System.out.println(String.format("%32s", Integer.toBinaryString(quadro[i])).replace(' ', '0'));
+    }
+    
+      
     return quadro;
   }
 
@@ -157,65 +200,329 @@ public class Receptor {
   * Retorno: retornar o array decodificado.
   *************************************************************** */
   public int[] CamadaFisicaReceptoraDecodificacaoManchesterDiferencial(int fluxoBrutoDeBits []){
-    /*
-    for (int i = 0; i < fluxoBrutoDeBits.length; i++){
-      System.out.println("Esse e o fluxoBrutoDeBits receptor codificacao Mancherster "+String.format("%32s", Integer.toBinaryString(fluxoBrutoDeBits[i])).replace(' ', '0'));
-    }
-    */  
-    int [] quadro = new int[(qtdCaracters + 3)/4];
+    //o problema acontece quando ele le uma sequencia de 1111 1 que seria a flag e o proximo bit
+    int [] quadro = new int[fluxoBrutoDeBits.length];
     int indexQuadro = 0;
-    int posBit = 30;
+    int deslocaQuadro = 31;
+    int indexFluxo = 0;
+    int deslocaFluxo = 29;
     int primeiroBit = (fluxoBrutoDeBits[0] >> 31) & 1;
     int segundoBit = (fluxoBrutoDeBits[0] >> 30) & 1;
-    boolean flag = false;
-    if (primeiroBit == 1 && segundoBit == 0){
-      quadro[0] = quadro[0] | (1<<31);
+    if (tipoDeEnquadramento == 3) {
+      fluxoBrutoDeBits = DecodificacaoViolacaoCamadaFisica(fluxoBrutoDeBits);
     }
-    else if (primeiroBit == 0 && segundoBit == 1){
-      quadro[0] = quadro[0] | (0<<31);
-    }
-    for (int i = 0; i < fluxoBrutoDeBits.length; i++){
-      for (int j = 29; j >= 0; j-=2){
-        if(i == fluxoBrutoDeBits.length-1 && (j == 15 && qtdCaracters%2 == 1)){
-          flag = true;
-          break;
+    for (int i = 0; i < qtdBitsTotais; i++){
+      if (i == 0){ //se esta na primeira iteracao
+        if (primeiroBit == 1 && segundoBit == 0){
+          quadro[indexQuadro] = quadro[indexQuadro] | (1<<deslocaQuadro);
+          deslocaQuadro--;
         }
-        int posAnterior = j+1;
-        int posSucessor = j;
-        int bitAnterior = (fluxoBrutoDeBits[i] >> posAnterior) & 1;
-        int bitSucessor = (fluxoBrutoDeBits[i]>> posSucessor) & 1;
-        //System.out.println("Bit anterior: " + bitAnterior + "\nBit sucessor: " + bitSucessor);
-        if ((bitAnterior == bitSucessor)){
-          quadro[indexQuadro] = quadro[indexQuadro] | (1<<posBit);
+        else if (primeiroBit == 0 && segundoBit == 1){
+          quadro[indexQuadro] = quadro[indexQuadro] | (0<<deslocaQuadro);
+          deslocaQuadro--;
+        }
+        else if (primeiroBit == 1 && segundoBit == 1){
+          i++;
+          /*
+          quadro[indexQuadro] = quadro[indexQuadro] | (1<<deslocaQuadro);
+          deslocaQuadro--;
+          quadro[indexQuadro] = quadro[indexQuadro] | (1<<deslocaQuadro);
+          deslocaQuadro--;
+          if (((fluxoBrutoDeBits[0] >> 29) & 1)==1 & ((fluxoBrutoDeBits[0] >> 28) & 1) == 0){
+            quadro[indexQuadro] = quadro[indexQuadro] | (1<<deslocaQuadro);        
+          }
+          else if (((fluxoBrutoDeBits[0] >> 29) & 1)==0 & ((fluxoBrutoDeBits[0] >> 28) & 1) == 1){
+            quadro[indexQuadro] = quadro[indexQuadro] | (0<<deslocaQuadro);   
+          }
+          */
+        }
+      }
+      else{
+        int posAnterior = deslocaFluxo+1;
+        int posSucessor = deslocaFluxo;
+        int proximo = deslocaFluxo-1;
+        int bitAnterior = (fluxoBrutoDeBits[indexFluxo] >> posAnterior) & 1;
+        int bitSucessor = (fluxoBrutoDeBits[indexFluxo]>> posSucessor) & 1;
+        int bitProximo = (fluxoBrutoDeBits[indexFluxo]>> proximo) & 1;
+        if (bitSucessor == 1 && bitProximo == 1){ //verifica se achou o par 11 (serve para a violacao de camada)
+          i++;
+          /*
+          quadro[indexQuadro] = quadro[indexQuadro] | (1<<deslocaQuadro);
+          deslocaQuadro--;
+          if (deslocaQuadro < 0){
+            deslocaQuadro = 31;
+            indexQuadro++;
+          }
+          quadro[indexQuadro] = quadro[indexQuadro] | (1<<deslocaQuadro);
+          */
+        }
+        else if (bitSucessor == 0 && bitProximo == 0){
+          //deslocaQuadro--;
+        }
+        else if ((bitAnterior == bitSucessor)){
+          quadro[indexQuadro] = quadro[indexQuadro] | (1<<deslocaQuadro);
+          deslocaQuadro--;
         }
         else if (bitAnterior != bitSucessor){
-          quadro[indexQuadro] = quadro[indexQuadro] | (0<<posBit);                
+          quadro[indexQuadro] = quadro[indexQuadro] | (0<<deslocaQuadro);  
+          deslocaQuadro--;              
         }
-        posBit--;
+        if (deslocaQuadro < 0){
+          deslocaQuadro = 31;
+          indexQuadro++;
         }
-        if (flag){
+        deslocaFluxo-=2;
+        if (deslocaFluxo <= 0){
+          posAnterior = 0;
+          bitAnterior = (fluxoBrutoDeBits[indexFluxo] >> posAnterior) & 1;
+          indexFluxo++;
+          if (indexFluxo >= fluxoBrutoDeBits.length){
+            break;
+          }
+          posSucessor = 31;
+          bitSucessor = (fluxoBrutoDeBits[indexFluxo]>> posSucessor) & 1; 
+          proximo = 30;
+          bitProximo = (fluxoBrutoDeBits[indexFluxo]>> proximo) & 1;
+          /*if (bitSucessor == 1 && bitProximo == 1){ //verifica se achou o par 11 (serve para a violacao de camada)
+            i++;
+            /*
+            quadro[indexQuadro] = quadro[indexQuadro] | (1<<deslocaQuadro);
+            deslocaQuadro--;
+            if (deslocaQuadro < 0){
+              deslocaQuadro = 31;
+              indexQuadro++;
+            }
+            quadro[indexQuadro] = quadro[indexQuadro] | (1<<deslocaQuadro);
+            
+          }
+          else*/if (bitSucessor == 0 && bitProximo == 0){
+            //deslocaQuadro--;
+          }
+          else if ((bitAnterior == bitSucessor)){
+            quadro[indexQuadro] = quadro[indexQuadro] | (1<<deslocaQuadro);
+            deslocaQuadro--;
+          }
+          else if (bitAnterior != bitSucessor){
+            quadro[indexQuadro] = quadro[indexQuadro] | (0<<deslocaQuadro); 
+            deslocaQuadro--;               
+          }
+          if (deslocaQuadro < 0){
+            deslocaQuadro = 31;
+            indexQuadro++;
+          }
+          deslocaFluxo = 29;
+        }
+        if (indexFluxo >= fluxoBrutoDeBits.length | indexQuadro >= quadro.length){
           break;
         }
-        if ((i+1)%2==0){
-          indexQuadro++;
-          posBit = 31;
-        }
-        if (i+1 != fluxoBrutoDeBits.length){
-          if (((fluxoBrutoDeBits[i] >> 0) & 1) == ((fluxoBrutoDeBits[i+1] >> 31) & 1)){
-            quadro[indexQuadro] = quadro[indexQuadro] | (1<<posBit);
-          }
-          else if(((fluxoBrutoDeBits[i] >> 0) & 1) != ((fluxoBrutoDeBits[i+1] >> 31) & 1)){
-            quadro[indexQuadro] = quadro[indexQuadro] | (0<<posBit);
-          }
-          posBit--;
-        }
+      }
     }
-    /*
+    System.out.println("Esse e o quadro descodificado Mancherster Diferencial");
     for (int i = 0; i < quadro.length; i++){
-      System.out.println("Esse e o quadro receptor codificacao Mancherster "+String.format("%32s", Integer.toBinaryString(quadro[i])).replace(' ', '0'));
-    }
-    */  
+      System.out.println(String.format("%32s", Integer.toBinaryString(quadro[i])).replace(' ', '0'));
+    }  
     return quadro;
+  }
+
+  public int [] CamadaEnlaceDadosReceptoraDesenquadramentoContagemDeCaracteres (int[] quadroEnquadrado) {
+    int [] quadro = new int[quadroEnquadrado.length];
+    int deslocaQuadro = 31;
+    int indexQuadro = 0;
+    int deslocaQuadoEnquadrado = 31;
+    int indexQuadroEnquadrado = 0;    
+    String contador4 = "00000100"; //represeta o 4 em binario, dessa forma, estou dizendo que vai contar de 4 em 4
+    String contador3 = "00000011"; //representa o 3
+    String contador2 = "00000010"; //representa o 2
+    String aux = "";
+    int qtdProximaIteracao = 0;
+    for (int i = 0; i < qtdBitsTotais; i++){
+      int bit = (quadroEnquadrado[indexQuadroEnquadrado] >> deslocaQuadoEnquadrado) & 1;
+      deslocaQuadoEnquadrado--;
+      if (bit == 1){
+        aux+= '1';
+      }
+      else {
+        aux+= '0';
+      }
+      if (aux.equals(contador4)){
+        qtdProximaIteracao = 24;
+      }
+      else if (aux.equals(contador3)){
+        qtdProximaIteracao = 16;
+      }
+      else if (aux.equals(contador2)){
+        qtdProximaIteracao = 8;
+      }
+      if (aux.length()==8){ //verifica se ja leu a informacao de controle completa
+        for (int j = 0; j < qtdProximaIteracao; j++){
+          bit = (quadroEnquadrado[indexQuadroEnquadrado] >> deslocaQuadoEnquadrado) & 1;
+          if (bit == 1){
+            quadro[indexQuadro] = quadro[indexQuadro] | (1 << deslocaQuadro);
+          }
+          deslocaQuadro--;
+          if (deslocaQuadro < 0){
+            deslocaQuadro = 31;
+            indexQuadro++;
+          }
+          deslocaQuadoEnquadrado--;
+          if (deslocaQuadoEnquadrado<0){
+            deslocaQuadoEnquadrado = 31;
+            indexQuadroEnquadrado++;
+          }
+          if (indexQuadro >= quadro.length || indexQuadroEnquadrado >= quadroEnquadrado.length){
+            break;
+          }
+        }
+        aux = "";
+      }
+      if (deslocaQuadoEnquadrado < 0){
+        deslocaQuadoEnquadrado = 31;
+        indexQuadroEnquadrado++;
+      }
+      if (indexQuadro >= quadro.length || indexQuadroEnquadrado >= quadroEnquadrado.length){
+        break;
+      }
+    }
+
+    return quadro;
+  }
+
+  public int [] CamadaEnlaceDadosReceptoraDesenquadramentoInsercaoDeBytes (int[] quadroEnquadrado) {
+    int [] quadro = new int[quadroEnquadrado.length];
+    int deslocaQuadro = 31;
+    int indexQuadro = 0;
+    int deslocaQuadoEnquadrado = 31;
+    int indexQuadroEnquadrado = 0;   
+    String flag = "00111111";
+    String esc = "01000000";
+    String aux = "";
+    for (int i = 0; i < qtdBitsTotais; i++){
+      int bit = (quadroEnquadrado[indexQuadroEnquadrado] >> deslocaQuadoEnquadrado) & 1;
+      deslocaQuadoEnquadrado--;
+      if (deslocaQuadoEnquadrado<0){
+        deslocaQuadoEnquadrado = 31;
+        indexQuadroEnquadrado++;
+      }
+      if (bit == 1){
+        aux+= '1';
+      }
+      else {
+        aux+= '0';
+      }
+      if (aux.length()==8){ //verifica se ja leu a informacao de controle completa
+        System.out.println("Esse e o aux " + aux);
+        if (aux.equals(esc)){ //insere os proximos 8 bits em quadro  
+          System.out.println("Aux e igual a esc");
+          for (int j = 0; j < 8; j++){
+            bit = (quadroEnquadrado[indexQuadroEnquadrado] >> deslocaQuadoEnquadrado) & 1;
+            System.out.println(bit);
+            if (bit == 1){
+              quadro[indexQuadro] = quadro[indexQuadro] | (1 << deslocaQuadro);
+            }
+            deslocaQuadro--;
+            if (deslocaQuadro < 0){
+              deslocaQuadro = 31;
+              indexQuadro++;
+            }
+            deslocaQuadoEnquadrado--;
+            if (deslocaQuadoEnquadrado < 0){
+              deslocaQuadoEnquadrado = 31;
+              indexQuadroEnquadrado++;
+            }
+            if (indexQuadro >= quadro.length || indexQuadroEnquadrado >= quadroEnquadrado.length){
+              break;
+            }
+          }
+          System.out.println("Inseriu o proximo caracter em quadro");
+        }
+        else if (aux.equals(flag)){ //ignora
+        }
+        else if (aux.equals("00000000")){
+          break;
+        }
+        else {
+          System.out.println("Insere os bits do caracters");
+          for (int j = 0; j < 8; j++){
+            if (aux.charAt(j) == '1'){
+              quadro[indexQuadro] = quadro[indexQuadro] | (1 << deslocaQuadro);
+            }
+            deslocaQuadro--;
+            if (deslocaQuadro < 0){
+              deslocaQuadro = 31;
+              indexQuadro++;
+            }/*
+            deslocaQuadoEnquadrado--;
+            if (deslocaQuadoEnquadrado<0){
+              deslocaQuadoEnquadrado = 31;
+              indexQuadroEnquadrado++;
+            }*/
+            if (indexQuadro >= quadro.length || indexQuadroEnquadrado >= quadroEnquadrado.length){
+              break;
+            }
+          }          
+        }
+        aux = "";
+      }
+      if (deslocaQuadoEnquadrado < 0){
+        deslocaQuadoEnquadrado = 31;
+        indexQuadroEnquadrado++;
+      }
+      if (indexQuadro >= quadro.length || indexQuadroEnquadrado >= quadroEnquadrado.length){
+        break;
+      }
+    }
+
+    return quadro;
+  }
+
+  public int[] DecodificacaoViolacaoCamadaFisica(int[] fluxoBrutoDeBits) {    
+    int [] quadroDesenquadrado = new int[fluxoBrutoDeBits.length];
+    int indexQuadro = 0;
+    int deslocaQuadro = 31;
+    int indexFLuxo = 0;
+    int deslocaFluxo = 31;
+    for (int i = 0; i < qtdBitsTotais; i++){
+        int posAnterior = deslocaFluxo;
+        int posSucessor = deslocaFluxo-1;
+        int bitAnterior = (fluxoBrutoDeBits[indexFLuxo] >> posAnterior) & 1;
+        int bitSucessor = (fluxoBrutoDeBits[indexFLuxo]>> posSucessor) & 1;
+        if (bitAnterior == 1 && bitSucessor == 0){
+          quadroDesenquadrado[indexQuadro] = quadroDesenquadrado[indexQuadro] | (1<<deslocaQuadro);
+          deslocaQuadro--;
+          quadroDesenquadrado[indexQuadro] = quadroDesenquadrado[indexQuadro] | (0<<deslocaQuadro);
+          deslocaQuadro--;
+        }
+        else if (bitAnterior == 0 && bitSucessor == 1){
+          quadroDesenquadrado[indexQuadro] = quadroDesenquadrado[indexQuadro] | (0<<deslocaQuadro); 
+          deslocaQuadro--;
+          quadroDesenquadrado[indexQuadro] = quadroDesenquadrado[indexQuadro] | (1<<deslocaQuadro);
+          deslocaQuadro--;
+        }
+        else if (bitAnterior == 1 && bitSucessor == 1){ //igora o par 11 caso o enquadramento seja violacao de camada
+          i++;              
+        }
+        else {
+          break;
+        }
+        if (deslocaQuadro < 0){
+          deslocaQuadro = 31;
+          indexQuadro++;
+        }
+        deslocaFluxo-=2;
+        if (deslocaFluxo < 0){
+          deslocaFluxo = 31;
+          indexFLuxo++;
+        }
+        if (indexFLuxo >= fluxoBrutoDeBits.length || indexQuadro >= quadroDesenquadrado.length){
+          break;
+        }
+    }
+    
+    System.out.println("Esse e o quadroDesenquadrado Violacao de camada");
+    for (int i = 0; i < quadroDesenquadrado.length; i++){
+      System.out.println(String.format("%32s", Integer.toBinaryString(quadroDesenquadrado[i])).replace(' ', '0'));
+    }
+    return quadroDesenquadrado;
   }
 
   /* ***************************************************************

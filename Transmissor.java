@@ -143,16 +143,29 @@ public class Transmissor {
     int [] quadroEnquadrado = new int[tamanhoQuadroEnquadrado];
     int indexQuadroEnquadrado = 0;
     int indexQuadro = 0;
-    String contador = "00000100"; //represeta o 4 em binario, dessa forma, estou dizendo que vai contar de 4 em 4
+    String contador4 = "00000100"; //represeta o 4 em binario, dessa forma, estou dizendo que vai contar de 4 em 4
+    String contador3 = "00000011";
+    String contador2 = "00000010";
     int deslocaQuadroEnquadrado = 31;
     int deslocaQuadro = 31;
     int indiceCaracter = 0;
     int qtdIteracao = (qtdCaracters*8) + 8*((int) Math.ceil((double) qtdCaracters / 3));
+    int qtdCaractersInseridos = 0;
+    int qtdBitsInseridos = 0;
     //System.out.println(qtdIteracao);
 
     for (int i = 0; i < qtdIteracao; i++) {
       if (deslocaQuadroEnquadrado >= 24) {
-        int num = contador.charAt(indiceCaracter);
+        int num;
+        if (qtdCaracters%3 == 2 && qtdCaractersInseridos + 2 >= qtdCaracters){
+          num = contador3.charAt(indiceCaracter); // muda a contagem para 3 caracteres, isto e, a informacao de controle mais 2 caracteres
+        }
+        else if (qtdCaracters%3 == 1 && qtdCaractersInseridos + 1 >= qtdCaracters) {
+          num = contador2.charAt(indiceCaracter); // muda a contagem para 2 caracteres, isto e, a informacao de controle mais 1 caracter
+        }
+        else {
+          num = contador4.charAt(indiceCaracter);
+        }
         if (num == '1'){
           quadroEnquadrado[indexQuadroEnquadrado] = quadroEnquadrado[indexQuadroEnquadrado] | (1 << deslocaQuadroEnquadrado);
         }
@@ -186,7 +199,13 @@ public class Transmissor {
           }
         }
       }
+      qtdBitsInseridos++;
+      if (qtdBitsInseridos == 8) {
+        qtdBitsInseridos = 0;
+        qtdCaractersInseridos++;
+      }
     }
+    System.out.println("Esse e o quadroEnquadrado contagem de caracteres");
     for (int i = 0; i < quadroEnquadrado.length; i++){
       System.out.println(String.format("%32s", Integer.toBinaryString(quadroEnquadrado[i])).replace(' ', '0'));
     }
@@ -558,18 +577,29 @@ public class Transmissor {
     case 1 : //codificacao manchester
     qtdBitsTotais = qtdBitsTotais + (8*qtdCaracters);
     fluxoBrutoDeBits = CamadaFisicaTransmissoraCodificacaoManchester(quadro);
-    qtdBitsTotais = 2*qtdBitsTotais;
+    //se o tipo do enquadramento for violacao, o calculo da qtdBitsTotais muda pois quando adiciona informacao de controle, ela nao dobra pois nao passa pela codificacao mancherter
+    if (tipoDeEnquadramento == 3){
+      qtdBitsTotais = 2*qtdBitsTotais - (qtdBitsTotais - qtdCaracters*8);
+    }
+    else{
+      qtdBitsTotais = 2*qtdBitsTotais;
+    }
     break;
     case 2 : //codificacao manchester diferencial
     qtdBitsTotais = qtdBitsTotais + (8*qtdCaracters);
     fluxoBrutoDeBits = CamadaFisicaTransmissoraCodificacaoManchesterDiferencial(quadro);
-    qtdBitsTotais = 2*qtdBitsTotais; //se o enqaudramento for violacao de camada, vai dar uma qtd de bits a mais, mudar depois!
+    //se o tipo do enquadramento for violacao, o calculo da qtdBitsTotais muda pois quando adiciona informacao de controle, ela nao dobra pois nao passa pela codificacao mancherterDiferencial
+    if (tipoDeEnquadramento == 3){
+      qtdBitsTotais = 2*qtdBitsTotais - (qtdBitsTotais - qtdCaracters*8);
+    }
+    else{
+      qtdBitsTotais = 2*qtdBitsTotais;
+    }
     break;
     }//fim do switch/case
     meioDeComunicao.setQtdCaracters(qtdCaracters);
     meioDeComunicao.setTipoDeCodificacao(tipoDeCodificacao);
     meioDeComunicao.setTipoDeEnquadramento(tipoDeEnquadramento);
-    System.out.println(qtdBitsTotais);
     meioDeComunicao.setQtdBitsTotais(qtdBitsTotais);
     qtdBitsTotais = 0;
     meioDeComunicao.meioDeComunicacao(fluxoBrutoDeBits);
@@ -794,11 +824,12 @@ public class Transmissor {
       }
 
     }
-    
+    /*
     System.out.println("Esse e o quadro codificado diferencial");
     for (int i = 0; i < fluxoCodificacaoManchersterDiferencial.length; i++){
       System.out.println(String.format("%32s", Integer.toBinaryString(fluxoCodificacaoManchersterDiferencial[i])).replace(' ', '0'));
     }
+    */
     
     //Verifica Se o enquadramento selecionado foi a violacao da camada fisica, caso tenha sido realiza o enquadramento
     // antes de enviar para o meio de comunicacao
@@ -809,19 +840,29 @@ public class Transmissor {
     else{
       quadroEnquadrado = fluxoCodificacaoManchersterDiferencial;
     }
+    System.out.println("Esse e o quadro codificado");
+    for (int i = 0; i < quadro.length; i++){
+      System.out.println(String.format("%32s", Integer.toBinaryString(quadro[i])).replace(' ', '0'));
+    }
+    System.out.println("Esse e o quadroEnquadrado codificado Mancherster diferencial");
+    for (int i = 0; i < quadroEnquadrado.length; i++){
+      System.out.println(String.format("%32s", Integer.toBinaryString(quadroEnquadrado[i])).replace(' ', '0'));
+    }
     return quadroEnquadrado;
   }//fim do CamadaFisicaTransmissoraCodificacaoManchesterDiferencial
 
   public int[] CodificacaoViolacaoCamadaFisica(int[] quadro) {
     int qtdFlags = 2*((int) Math.ceil((double) qtdCaracters / 3));  //calcula a quantdidade de flags que sera inserida
     int qtdBits = (8*qtdCaracters*2) + (qtdFlags*2); //mudar para qtdFlags*2 caso a flag seja 11
-    int tamanhoQuadroEnquadrado = 0;
+    int tamanhoQuadroEnquadrado = qtdBits / 32 + 1;
+    /*
     if (qtdBits % 32 == 0){
       tamanhoQuadroEnquadrado = qtdBits / 32; // Index do Array ENQUADRADO
     }
     else{
       tamanhoQuadroEnquadrado = qtdBits / 32 + 1;
     }
+    */
     // Criando Novo quadro com o novo tamanhoint [] quadroEnquadrado = new int[quadro.length*3];
     int [] quadroEnquadrado = new int[tamanhoQuadroEnquadrado];
     String flag = "11";
@@ -929,11 +970,10 @@ public class Transmissor {
         }
       }
     }
-    
+    System.out.println("Esse e o quadroEnquadrado Violacao de Camada");
     for (int i = 0; i < quadroEnquadrado.length; i++){
       System.out.println(String.format("%32s", Integer.toBinaryString(quadroEnquadrado[i])).replace(' ', '0'));
     }
-    System.out.println();
 
     return quadroEnquadrado;
   }

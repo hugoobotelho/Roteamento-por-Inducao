@@ -18,7 +18,7 @@ public class MeioDeComunicao {
   private int qtdCaracters = 0;
   private int tipoDeCodificacao = 0;
   private int tipoDeEnquadramento = 0;
-  private int qtdBitsTotais;
+  private int qtdBitsTotais = 0;
   
   /* ***************************************************************
   * Metodo: setQtdCaracters.
@@ -57,6 +57,12 @@ public class MeioDeComunicao {
   * Retorno: sem retorno.
   *************************************************************** */
   public void meioDeComunicacao (int fluxoBrutoDeBits []) {
+    
+    receptor.setQtdCaracters(qtdCaracters);
+    receptor.setTipoDeCodificacao(tipoDeCodificacao);
+    receptor.setTipoDeEnquadramento(tipoDeEnquadramento);
+    receptor.setQtdBitsTotais(qtdBitsTotais);
+
     Image b1Image = new Image("/img/line_horizontal.png");
     ImageView b1 = new ImageView(b1Image);
     b1.setLayoutX(240);
@@ -197,6 +203,13 @@ public class MeioDeComunicao {
               }
             }
           });
+          qtdBitsTotais--;
+          if (qtdBitsTotais <= 0){
+            break;
+          }
+        }
+        if (qtdBitsTotais <= 0){
+          break;
         }
       }
       Platform.runLater(()->{
@@ -247,10 +260,7 @@ public class MeioDeComunicao {
     }
 
     //chama proxima camada
-    receptor.setQtdCaracters(qtdCaracters);
-    receptor.setTipoDeCodificacao(tipoDeCodificacao);
-    receptor.setTipoDeEnquadramento(tipoDeEnquadramento);
-    //receptor.CamadaFisicaReceptora(fluxoBrutoDeBitsPontoB);
+    receptor.CamadaFisicaReceptora(fluxoBrutoDeBitsPontoB);
     }).start();
   
   }//fim do metodo MeioDeTransmissao
