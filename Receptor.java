@@ -1,10 +1,10 @@
 /* ***************************************************************
 * Autor............: Hugo Botelho Santana
 * Matricula........: 202210485
-* Inicio...........: 22/03/2023
-* Ultima alteracao.: 07/04/2023
-* Nome.............: Camada Fisica
-* Funcao...........: Simular a camada fisica de uma rede
+* Inicio...........: 28/04/2023
+* Ultima alteracao.: 04/05/2023
+* Nome.............: Camada Enlace
+* Funcao...........: Simular o enquadramento da camada de Enlace de dados
 *************************************************************** */
 
 //Importacao das bibliotecas do JavaFx
@@ -12,10 +12,8 @@
 import javafx.scene.control.TextArea;
 
 public class Receptor {
-  private int qtdCaracters = 0;
   private int tipoDeDecodificacao = 0;
   private int tipoDeEnquadramento = 0;
-  private int qtdBitsTotais = 0;
   TextArea text = new TextArea();
 
   public Receptor(){
@@ -36,17 +34,6 @@ public class Receptor {
   }
   
   /* ***************************************************************
-  * Metodo: setQtdCaracters.
-  * Funcao: metodo para setar a quantidade de caracters da mensagem.
-  * Parametros: recebe uma quantidade de caracters do tipo inteiro.
-  * Retorno: sem retorno.
-  *************************************************************** */
-
-  public void setQtdCaracters(int qtd){
-    this.qtdCaracters = qtd;
-  }
-  
-  /* ***************************************************************
   * Metodo: setTipoDeCodificacao.
   * Funcao: metodo para setar tipo de codificacao da mensagem.
   * Parametros: recebe uma quantidade de caracters do tipo inteiro.
@@ -56,14 +43,16 @@ public class Receptor {
     this.tipoDeDecodificacao = codificacao;
   }
 
+  /* ***************************************************************
+  * Metodo: setTipoDeEnquadramento.
+  * Funcao: metodo para setar tipo de enquadramento da mensagem.
+  * Parametros: recebe o tipo do enquadramento.
+  * Retorno: sem retorno.
+  *************************************************************** */
   public void setTipoDeEnquadramento(int tipoDeEnquadramento){
-    this.tipoDeEnquadramento= tipoDeEnquadramento;
+    this.tipoDeEnquadramento = tipoDeEnquadramento;
   }
-  
-  public void setQtdBitsTotais(int qtdBitsTotais){
-    this.qtdBitsTotais = qtdBitsTotais;
-  }
-  
+
   /* ***************************************************************
   * Metodo: CamadaFisicaReceptora.
   * Funcao: metodo para chamar a codificacao necessaria para decodificar a mensagem com base no tipo de codificacao e depois chamar a CamadaDeAplicacaoReceptora.
@@ -77,9 +66,15 @@ public class Receptor {
       quadro = CamadaFisicaReceptoraDecodificacaoBinaria(fluxoBrutoDeBits);
       break;
     case 1 : //codificacao manchester
+      if (tipoDeEnquadramento == 3){
+        fluxoBrutoDeBits = DecodificacaoViolacaoCamadaFisica(fluxoBrutoDeBits);
+      }
       quadro = CamadaFisicaReceptoraDecodificacaoManchester(fluxoBrutoDeBits);
       break;
     case 2 : //codificacao manchester diferencial
+      if (tipoDeEnquadramento == 3){
+        fluxoBrutoDeBits = DecodificacaoViolacaoCamadaFisica(fluxoBrutoDeBits);
+      }
        quadro = CamadaFisicaReceptoraDecodificacaoManchesterDiferencial(fluxoBrutoDeBits);
        break;
     }//fim do switch/case
@@ -100,10 +95,10 @@ public class Receptor {
         quadroDesenquadrado = CamadaEnlaceDadosReceptoraDesenquadramentoInsercaoDeBytes(quadro);
         break;
       case 2: // insercao de bits
-        //quadroDesennquadrado = CamadaEnlaceDadosTransmissoraEnquadramentoInsercaoDeBits(quadro);
+        quadroDesenquadrado = CamadaEnlaceDadosReceptoraDesenquadramentoInsercaoDeBits(quadro);
         break;
       case 3: // violacao da camada fisica
-        //quadroDesennquadrado = CamadaEnlaceDadosTransmissoraEnquadramentoViolacaoDaCamadaFisica(quadro);
+        quadroDesenquadrado = quadro;
         break;
     }// fim do switch/case
     CamadaDeAplicacaoReceptora(quadroDesenquadrado);
@@ -115,7 +110,6 @@ public class Receptor {
   * Parametros: recebe o array de inteiros.
   * Retorno: retorna um array de interios decodificado.
   *************************************************************** */
-
   public int[] CamadaFisicaReceptoraDecodificacaoBinaria(int fluxoBrutoDeBits []){
     int [] quadro = new int[fluxoBrutoDeBits.length];
     quadro = fluxoBrutoDeBits;
@@ -144,7 +138,7 @@ public class Receptor {
     int deslocaQuadro = 31;
     int indexFLuxo = 0;
     int deslocaFluxo = 31;
-    for (int i = 0; i < qtdBitsTotais; i++){
+    for (int i = 0; i < fluxoBrutoDeBits.length*32; i++){ // qtdBitsTotais
         int posAnterior = deslocaFluxo;
         int posSucessor = deslocaFluxo-1;
         int bitAnterior = (fluxoBrutoDeBits[indexFLuxo] >> posAnterior) & 1;
@@ -183,11 +177,12 @@ public class Receptor {
         }
       
     }
-    
+    /*
     System.out.println("Esse e o quadro decodificado Mancherster");
     for (int i = 0; i < quadro.length; i++){
       System.out.println(String.format("%32s", Integer.toBinaryString(quadro[i])).replace(' ', '0'));
     }
+    */
     
       
     return quadro;
@@ -211,7 +206,7 @@ public class Receptor {
     if (tipoDeEnquadramento == 3) {
       fluxoBrutoDeBits = DecodificacaoViolacaoCamadaFisica(fluxoBrutoDeBits);
     }
-    for (int i = 0; i < qtdBitsTotais; i++){
+    for (int i = 0; i < fluxoBrutoDeBits.length*32; i++){ // qtdBitsTotais
       if (i == 0){ //se esta na primeira iteracao
         if (primeiroBit == 1 && segundoBit == 0){
           quadro[indexQuadro] = quadro[indexQuadro] | (1<<deslocaQuadro);
@@ -317,13 +312,21 @@ public class Receptor {
         }
       }
     }
+    /*
     System.out.println("Esse e o quadro descodificado Mancherster Diferencial");
     for (int i = 0; i < quadro.length; i++){
       System.out.println(String.format("%32s", Integer.toBinaryString(quadro[i])).replace(' ', '0'));
-    }  
+    } 
+    */ 
     return quadro;
   }
 
+  /* ***************************************************************
+  * Metodo: CamadaEnlaceDadosReceptoraDesenquadramentoContagemDeCaracteres.
+  * Funcao: metodo para desenquadrar a mensagem do tipo Contagem de Caracteres.
+  * Parametros: recebe o array de inteiros.
+  * Retorno: retornar o array desenquadrado.
+  *************************************************************** */
   public int [] CamadaEnlaceDadosReceptoraDesenquadramentoContagemDeCaracteres (int[] quadroEnquadrado) {
     int [] quadro = new int[quadroEnquadrado.length];
     int deslocaQuadro = 31;
@@ -335,7 +338,7 @@ public class Receptor {
     String contador2 = "00000010"; //representa o 2
     String aux = "";
     int qtdProximaIteracao = 0;
-    for (int i = 0; i < qtdBitsTotais; i++){
+    for (int i = 0; i < quadroEnquadrado.length*32; i++){  // qtdBitsTotais
       int bit = (quadroEnquadrado[indexQuadroEnquadrado] >> deslocaQuadoEnquadrado) & 1;
       deslocaQuadoEnquadrado--;
       if (bit == 1){
@@ -387,6 +390,12 @@ public class Receptor {
     return quadro;
   }
 
+  /* ***************************************************************
+  * Metodo: CamadaEnlaceDadosReceptoraDesenquadramentoInsercaoDeBytes.
+  * Funcao: metodo para desenquadrar a mensagem do tipo Insercao de Bytes.
+  * Parametros: recebe o array de inteiros.
+  * Retorno: retornar o array desenquadrado.
+  *************************************************************** */
   public int [] CamadaEnlaceDadosReceptoraDesenquadramentoInsercaoDeBytes (int[] quadroEnquadrado) {
     int [] quadro = new int[quadroEnquadrado.length];
     int deslocaQuadro = 31;
@@ -396,7 +405,7 @@ public class Receptor {
     String flag = "00111111";
     String esc = "01000000";
     String aux = "";
-    for (int i = 0; i < qtdBitsTotais; i++){
+    for (int i = 0; i < quadroEnquadrado.length*32; i++){ //  qtdBitsTotais
       int bit = (quadroEnquadrado[indexQuadroEnquadrado] >> deslocaQuadoEnquadrado) & 1;
       deslocaQuadoEnquadrado--;
       if (deslocaQuadoEnquadrado<0){
@@ -410,12 +419,9 @@ public class Receptor {
         aux+= '0';
       }
       if (aux.length()==8){ //verifica se ja leu a informacao de controle completa
-        System.out.println("Esse e o aux " + aux);
         if (aux.equals(esc)){ //insere os proximos 8 bits em quadro  
-          System.out.println("Aux e igual a esc");
           for (int j = 0; j < 8; j++){
             bit = (quadroEnquadrado[indexQuadroEnquadrado] >> deslocaQuadoEnquadrado) & 1;
-            System.out.println(bit);
             if (bit == 1){
               quadro[indexQuadro] = quadro[indexQuadro] | (1 << deslocaQuadro);
             }
@@ -433,7 +439,6 @@ public class Receptor {
               break;
             }
           }
-          System.out.println("Inseriu o proximo caracter em quadro");
         }
         else if (aux.equals(flag)){ //ignora
         }
@@ -441,7 +446,86 @@ public class Receptor {
           break;
         }
         else {
-          System.out.println("Insere os bits do caracters");
+          for (int j = 0; j < 8; j++){
+            if (aux.charAt(j) == '1'){
+              quadro[indexQuadro] = quadro[indexQuadro] | (1 << deslocaQuadro);
+            }
+            deslocaQuadro--;
+            if (deslocaQuadro < 0){
+              deslocaQuadro = 31;
+              indexQuadro++;
+            }/*
+            deslocaQuadoEnquadrado--;
+            if (deslocaQuadoEnquadrado<0){
+              deslocaQuadoEnquadrado = 31;
+              indexQuadroEnquadrado++;
+            }*/
+            if (indexQuadro >= quadro.length || indexQuadroEnquadrado >= quadroEnquadrado.length){
+              break;
+            }
+          }          
+        }
+        aux = "";
+      }
+      if (deslocaQuadoEnquadrado < 0){
+        deslocaQuadoEnquadrado = 31;
+        indexQuadroEnquadrado++;
+      }
+      if (indexQuadro >= quadro.length || indexQuadroEnquadrado >= quadroEnquadrado.length){
+        break;
+      }
+    }
+
+    return quadro;
+  }
+  
+  /* ***************************************************************
+  * Metodo: CamadaEnlaceDadosReceptoraDesenquadramentoInsercaoDeBits.
+  * Funcao: metodo para desenquadrar a mensagem do tipo Insercao de Bits.
+  * Parametros: recebe o array de inteiros.
+  * Retorno: retornar o array desenquadrado.
+  *************************************************************** */
+  public int [] CamadaEnlaceDadosReceptoraDesenquadramentoInsercaoDeBits (int[] quadroEnquadrado) {
+    int [] quadro = new int[quadroEnquadrado.length];
+    int deslocaQuadro = 31;
+    int indexQuadro = 0;
+    int deslocaQuadoEnquadrado = 31;
+    int indexQuadroEnquadrado = 0;
+    int qtdBitsUm = 0;  
+    String flag = "01111110";
+    String aux = "";
+    for (int i = 0; i < quadroEnquadrado.length*32; i++){ // qtdBitsTotais
+      int bit = (quadroEnquadrado[indexQuadroEnquadrado] >> deslocaQuadoEnquadrado) & 1;
+      deslocaQuadoEnquadrado--;
+      if (deslocaQuadoEnquadrado<0){
+        deslocaQuadoEnquadrado = 31;
+        indexQuadroEnquadrado++;
+      }
+      if (bit == 1){
+        aux+= '1';
+        qtdBitsUm++;
+        bit = (quadroEnquadrado[indexQuadroEnquadrado] >> deslocaQuadoEnquadrado) & 1;
+        if (qtdBitsUm == 5 && bit == 0){
+          qtdBitsUm = 0;
+          deslocaQuadoEnquadrado--;
+          if (deslocaQuadoEnquadrado<0){
+            deslocaQuadoEnquadrado = 31;
+            indexQuadroEnquadrado++;
+          }
+        }
+      }
+      else {
+        aux+= '0';
+        qtdBitsUm = 0;
+      }
+      if (aux.length()==8){ //verifica se ja leu a informacao de controle completa
+        if (aux.equals(flag)){
+          //ignora
+        }
+        else if (aux.equals("00000000")){
+          break;
+        }
+        else {
           for (int j = 0; j < 8; j++){
             if (aux.charAt(j) == '1'){
               quadro[indexQuadro] = quadro[indexQuadro] | (1 << deslocaQuadro);
@@ -475,13 +559,19 @@ public class Receptor {
     return quadro;
   }
 
+  /* ***************************************************************
+  * Metodo: DecodificacaoViolacaoCamadaFisica.
+  * Funcao: metodo para desenquadrar a mensagem do tipo Violacao de Camada.
+  * Parametros: recebe o array de inteiros.
+  * Retorno: retornar o array desenquadrado.
+  *************************************************************** */
   public int[] DecodificacaoViolacaoCamadaFisica(int[] fluxoBrutoDeBits) {    
     int [] quadroDesenquadrado = new int[fluxoBrutoDeBits.length];
     int indexQuadro = 0;
     int deslocaQuadro = 31;
     int indexFLuxo = 0;
     int deslocaFluxo = 31;
-    for (int i = 0; i < qtdBitsTotais; i++){
+    for (int i = 0; i < fluxoBrutoDeBits.length*32; i++){ // qtdBitsTotais
         int posAnterior = deslocaFluxo;
         int posSucessor = deslocaFluxo-1;
         int bitAnterior = (fluxoBrutoDeBits[indexFLuxo] >> posAnterior) & 1;
@@ -517,11 +607,12 @@ public class Receptor {
           break;
         }
     }
-    
+    /*
     System.out.println("Esse e o quadroDesenquadrado Violacao de camada");
     for (int i = 0; i < quadroDesenquadrado.length; i++){
       System.out.println(String.format("%32s", Integer.toBinaryString(quadroDesenquadrado[i])).replace(' ', '0'));
     }
+    */
     return quadroDesenquadrado;
   }
 

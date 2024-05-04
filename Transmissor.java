@@ -1,10 +1,10 @@
 /* ***************************************************************
 * Autor............: Hugo Botelho Santana
 * Matricula........: 202210485
-* Inicio...........: 22/03/2023
-* Ultima alteracao.: 07/04/2023
-* Nome.............: Camada Fisica
-* Funcao...........: Simular a camada fisica de uma rede
+* Inicio...........: 28/04/2023
+* Ultima alteracao.: 04/05/2023
+* Nome.............: Camada Enlace
+* Funcao...........: Simular o enquadramento da camada de Enlace de dados
 *************************************************************** */
 
 //Importacao das bibliotecas do JavaFx
@@ -108,6 +108,13 @@ public class Transmissor {
     //CamadaFisicaTransmissora(quadro); 
   }
 
+  
+  /* ***************************************************************
+  * Metodo: CamadaEnlaceDadosTransmissora.
+  * Funcao: metodo para fazer apenas o enquadramendo por enquanto e chamar a proxima camada
+  * Parametros: recebe um quadro do tipo inteiro.
+  * Retorno: sem retorno.
+  *************************************************************** */
   void CamadaEnlaceDadosTransmissora (int quadro []) {
     int [] quadroEnquadrado = CamadaEnlaceDadosTransmissoraEnquadramento(quadro);
     //CamadaDeEnlaceTransmissoraControleDeErro(quadro);
@@ -115,7 +122,13 @@ public class Transmissor {
     //chama proxima camada
     CamadaFisicaTransmissora(quadroEnquadrado);
   }//fim do metodo CamadaEnlaceDadosTransmissora
-
+  
+  /* ***************************************************************
+  * Metodo: CamadaEnlaceDadosTransmissoraEnquadramento.
+  * Funcao: metodo para fazer o enquadramento com base no tipo de enquadramento escolhido pelo usuario
+  * Parametros: recebe um quadro do tipo inteiro.
+  * Retorno: retorna o quadro enquadrado.
+  *************************************************************** */
   public int[] CamadaEnlaceDadosTransmissoraEnquadramento (int quadro[]) {
     
     int quadroEnquadrado[] = new int[0]; //mudar depois
@@ -137,6 +150,12 @@ public class Transmissor {
     return quadroEnquadrado;
   }// fim do metodo CamadaEnlaceTransmissoraEnquadramento
 
+  /* ***************************************************************
+  * Metodo: CamadaEnlaceDadosTransmissoraEnquadramentoContagemDeCaracteres.
+  * Funcao: metodo para fazer o enquadramento Contagem de Caracteres
+  * Parametros: recebe um quadro do tipo inteiro.
+  * Retorno: retorna o quadro enquadrado.
+  *************************************************************** */
   public int[] CamadaEnlaceDadosTransmissoraEnquadramentoContagemDeCaracteres(int quadro[]) {
     int tamanhoQuadroEnquadrado = (int) Math.ceil((double) qtdCaracters / 3);
     //System.out.println(tamanhoQuadroEnquadrado);
@@ -205,15 +224,24 @@ public class Transmissor {
         qtdCaractersInseridos++;
       }
     }
+    /*
     System.out.println("Esse e o quadroEnquadrado contagem de caracteres");
     for (int i = 0; i < quadroEnquadrado.length; i++){
       System.out.println(String.format("%32s", Integer.toBinaryString(quadroEnquadrado[i])).replace(' ', '0'));
     }
+    */
 
     
     return quadroEnquadrado;
   }// fim do metodo CamadaEnlaceDadosTransmissoraContagemDeCaracteres
 
+
+  /* ***************************************************************
+  * Metodo: CamadaEnlaceDadosTransmissoraEnquadramentoInsercaoDeBytes.
+  * Funcao: metodo para fazer o enquadramento Insercao de Bytes.
+  * Parametros: recebe um quadro do tipo inteiro.
+  * Retorno: retorna o quadro enquadrado.
+  *************************************************************** */
   public int[] CamadaEnlaceDadosTransmissoraEnquadramentoInsercaoDeBytes(int quadro[]) {
     int [] quadroEnquadrado = new int[quadro.length*3];
     String flag = "00111111"; //minha flag sera a ?          "01001000" seria H de Hugotoso
@@ -237,15 +265,7 @@ public class Transmissor {
       deslocaQuadoEnquadrado--;
       if (deslocaQuadoEnquadrado < 0){
         deslocaQuadoEnquadrado = 31;
-        System.out.println(indexQuadroEnquadrado);
         indexQuadroEnquadrado++;
-        System.out.println(indexQuadroEnquadrado);
-        
-        /*
-        if (indexQuadroEnquadrado>=quadroEnquadrado.length){
-          break;
-        }
-        */
       }
       qtdBitsTotais++;
     }
@@ -266,23 +286,13 @@ public class Transmissor {
           deslocaQuadoEnquadrado--;
           if (deslocaQuadoEnquadrado < 0){
             deslocaQuadoEnquadrado = 31;
-            System.out.println(indexQuadroEnquadrado);
             indexQuadroEnquadrado++;
-            System.out.println(indexQuadroEnquadrado);
             
-            /*
-            if (indexQuadroEnquadrado>=quadroEnquadrado.length){
-              break;
-            }
-            */
           }
           qtdBitsTotais++;
         }
         indiceCaracter = 0; 
       }
-
-
-
       auxCompara = "";
       for (int i = 0; i < 8; i++){ //para cada caracter perroce os bits e adiciona em auxCompara
         int bit = (quadro[indexQuadro] >> deslocaQuadro) & 1;
@@ -301,7 +311,6 @@ public class Transmissor {
           }
         }
       }
-      System.out.println(auxCompara + flag);
       if (auxCompara.equals(flag) || auxCompara.equals(esc)){ //verifica se o caracter e igual a flag ou esc
         //System.out.println("Vai inserir o caracter fake");
         for (int i = 0; i < 8; i++){ //colocar o esc antes
@@ -365,15 +374,7 @@ public class Transmissor {
           deslocaQuadoEnquadrado--;
           if (deslocaQuadoEnquadrado < 0){
             deslocaQuadoEnquadrado = 31;
-            System.out.println(indexQuadroEnquadrado);
             indexQuadroEnquadrado++;
-            System.out.println(indexQuadroEnquadrado);
-            
-            /*
-            if (indexQuadroEnquadrado>=quadroEnquadrado.length){
-              break;
-            }
-            */
           }
         }
         indiceCaracter = 0; 
@@ -392,29 +393,27 @@ public class Transmissor {
           deslocaQuadoEnquadrado--;
           if (deslocaQuadoEnquadrado < 0){
             deslocaQuadoEnquadrado = 31;
-            System.out.println(indexQuadroEnquadrado);
             indexQuadroEnquadrado++;
-            System.out.println(indexQuadroEnquadrado);
-            
-            /*
-            if (indexQuadroEnquadrado>=quadroEnquadrado.length){
-              break;
-            }
-            */
           }
           qtdBitsTotais++;
         }
         indiceCaracter = 0; 
       }
     } //fim da insercao dos esc
-    
+    /*
     for (int i = 0; i < quadroEnquadrado.length; i++){
       System.out.println(String.format("%32s", Integer.toBinaryString(quadroEnquadrado[i])).replace(' ', '0'));
     }
+    */
     return quadroEnquadrado;    
   }
 
-  
+  /* ***************************************************************
+  * Metodo: CamadaEnlaceDadosTransmissoraEnquadramentoInsercaoDeBits.
+  * Funcao: metodo para fazer o enquadramento Insercao de Bits.
+  * Parametros: recebe um quadro do tipo inteiro.
+  * Retorno: retorna o quadro enquadrado.
+  *************************************************************** */
   public int[] CamadaEnlaceDadosTransmissoraEnquadramentoInsercaoDeBits(int quadro[]) {
     int [] quadroEnquadrado = new int[quadro.length*3];
     String flag = "01111110";
@@ -545,14 +544,21 @@ public class Transmissor {
         }
       }
     }
-    
+    /*
     for (int i = 0; i < quadroEnquadrado.length; i++){
       System.out.println(String.format("%32s", Integer.toBinaryString(quadroEnquadrado[i])).replace(' ', '0'));
     }
     System.out.println();
+    */
     return quadroEnquadrado;    
   }
 
+  /* ***************************************************************
+  * Metodo: CamadaEnlaceDadosTransmissoraEnquadramentoViolacaoDaCamadaFisica.
+  * Funcao: metodo para fazer o enquadramento Violacao da Camada.
+  * Parametros: recebe um quadro do tipo inteiro.
+  * Retorno: retorna o quadro enquadrado.
+  *************************************************************** */
   public int[] CamadaEnlaceDadosTransmissoraEnquadramentoViolacaoDaCamadaFisica (int quadro []) {
     // Decodificacao realizada na Camada Fisica
     // Uma vez que ele viola a camada fisica, a decodificacao deve ser feita la
@@ -597,7 +603,6 @@ public class Transmissor {
     }
     break;
     }//fim do switch/case
-    meioDeComunicao.setQtdCaracters(qtdCaracters);
     meioDeComunicao.setTipoDeCodificacao(tipoDeCodificacao);
     meioDeComunicao.setTipoDeEnquadramento(tipoDeEnquadramento);
     meioDeComunicao.setQtdBitsTotais(qtdBitsTotais);
@@ -683,10 +688,12 @@ public class Transmissor {
     else{
       quadroEnquadrado = fluxoCodificacaoMancherster;
     }
+    /*
     System.out.println("Esse é o quadro codificado mancherster");
     for (int i = 0; i < quadroEnquadrado.length; i++){
       System.out.println(String.format("%32s", Integer.toBinaryString(quadroEnquadrado[i])).replace(' ', '0'));
     }
+    */
     return quadroEnquadrado;
   }//fim do metodo CamadaFisicaTransmissoraCodificacaoManchester
   
@@ -840,17 +847,15 @@ public class Transmissor {
     else{
       quadroEnquadrado = fluxoCodificacaoManchersterDiferencial;
     }
-    System.out.println("Esse e o quadro codificado");
-    for (int i = 0; i < quadro.length; i++){
-      System.out.println(String.format("%32s", Integer.toBinaryString(quadro[i])).replace(' ', '0'));
-    }
-    System.out.println("Esse e o quadroEnquadrado codificado Mancherster diferencial");
-    for (int i = 0; i < quadroEnquadrado.length; i++){
-      System.out.println(String.format("%32s", Integer.toBinaryString(quadroEnquadrado[i])).replace(' ', '0'));
-    }
     return quadroEnquadrado;
   }//fim do CamadaFisicaTransmissoraCodificacaoManchesterDiferencial
-
+  
+  /* ***************************************************************
+  * Metodo: CamadaEnlaceDadosTransmissoraEnquadramentoViolacaoDaCamadaFisica.
+  * Funcao: metodo para fazer o enquadramento Violacao da Camada.
+  * Parametros: recebe um quadro do tipo inteiro.
+  * Retorno: retorna o quadro enquadrado.
+  *************************************************************** */
   public int[] CodificacaoViolacaoCamadaFisica(int[] quadro) {
     int qtdFlags = 2*((int) Math.ceil((double) qtdCaracters / 3));  //calcula a quantdidade de flags que sera inserida
     int qtdBits = (8*qtdCaracters*2) + (qtdFlags*2); //mudar para qtdFlags*2 caso a flag seja 11
@@ -970,10 +975,12 @@ public class Transmissor {
         }
       }
     }
+    /*
     System.out.println("Esse e o quadroEnquadrado Violacao de Camada");
     for (int i = 0; i < quadroEnquadrado.length; i++){
       System.out.println(String.format("%32s", Integer.toBinaryString(quadroEnquadrado[i])).replace(' ', '0'));
     }
+    */
 
     return quadroEnquadrado;
   }

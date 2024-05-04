@@ -1,10 +1,10 @@
 /* ***************************************************************
 * Autor............: Hugo Botelho Santana
 * Matricula........: 202210485
-* Inicio...........: 22/03/2023
-* Ultima alteracao.: 07/03/2023
-* Nome.............: Camada Fisica
-* Funcao...........: Simular a camada fisica de uma rede
+* Inicio...........: 28/04/2023
+* Ultima alteracao.: 04/05/2023
+* Nome.............: Camada Enlace
+* Funcao...........: Simular o enquadramento da camada de Enlace de dados
 *************************************************************** */
 
 //Importacao das bibliotecas do JavaFx
@@ -15,21 +15,9 @@ import javafx.scene.image.ImageView;
 
 public class MeioDeComunicao {
   private Receptor receptor = new Receptor();
-  private int qtdCaracters = 0;
   private int tipoDeCodificacao = 0;
   private int tipoDeEnquadramento = 0;
   private int qtdBitsTotais = 0;
-  
-  /* ***************************************************************
-  * Metodo: setQtdCaracters.
-  * Funcao: metodo para setar a quantidade de caracters da mensagem.
-  * Parametros: recebe uma quantidade de caracters do tipo inteiro.
-  * Retorno: sem retorno.
-  *************************************************************** */
-
-  public void setQtdCaracters(int qtdCaracters){
-    this.qtdCaracters = qtdCaracters;
-  }
   
   /* ***************************************************************
   * Metodo: setTipoDeCodificacao.
@@ -42,10 +30,22 @@ public class MeioDeComunicao {
     this.tipoDeCodificacao = tipoDeCodificacao;
   }
 
+  /* ***************************************************************
+  * Metodo: setTipoDeEnquadramento.
+  * Funcao: metodo para setar tipo de enquadramento da mensagem.
+  * Parametros: recebe o tipo de enquadramento do tipo Inteiro.
+  * Retorno: sem retorno.
+  *************************************************************** */
   public void setTipoDeEnquadramento(int tipoDeEnquadramento){
     this.tipoDeEnquadramento = tipoDeEnquadramento;
   }
 
+  /* ***************************************************************
+  * Metodo: setQtdBitsTotais.
+  * Funcao: metodo para setar a quantidade de bits da mensagem.
+  * Parametros: recebe o tipo de enquadramento do tipo Inteiro.
+  * Retorno: sem retorno.
+  *************************************************************** */
   public void setQtdBitsTotais(int qtdBitsTotais){
     this.qtdBitsTotais = qtdBitsTotais;
   }
@@ -58,10 +58,8 @@ public class MeioDeComunicao {
   *************************************************************** */
   public void meioDeComunicacao (int fluxoBrutoDeBits []) {
     
-    receptor.setQtdCaracters(qtdCaracters);
     receptor.setTipoDeCodificacao(tipoDeCodificacao);
     receptor.setTipoDeEnquadramento(tipoDeEnquadramento);
-    receptor.setQtdBitsTotais(qtdBitsTotais);
 
     Image b1Image = new Image("/img/line_horizontal.png");
     ImageView b1 = new ImageView(b1Image);
