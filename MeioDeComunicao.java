@@ -14,7 +14,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 
 public class MeioDeComunicao {
-  private Receptor receptor = new Receptor();
+  //private Receptor receptor = new Receptor();
   private int tipoDeCodificacao = 0;
   private int tipoDeEnquadramento = 0;
   private int qtdBitsTotais = 0;
@@ -58,8 +58,8 @@ public class MeioDeComunicao {
   *************************************************************** */
   public void meioDeComunicacao (int fluxoBrutoDeBits []) {
     
-    receptor.setTipoDeCodificacao(tipoDeCodificacao);
-    receptor.setTipoDeEnquadramento(tipoDeEnquadramento);
+    Principal.receptor.setTipoDeCodificacao(tipoDeCodificacao);
+    Principal.receptor.setTipoDeEnquadramento(tipoDeEnquadramento);
 
     Image b1Image = new Image("/img/line_horizontal.png");
     ImageView b1 = new ImageView(b1Image);
@@ -143,9 +143,9 @@ public class MeioDeComunicao {
         arrayTransicoes[i].setVisible(false);  
       }
     });
-
-    Principal.root.getChildren().addAll(b1, a1, b2, a2, b3, a3, b4, a4, b5, a5, b6, a6, v1, v2, v3, v4, v5);
-
+    Platform.runLater(()->{
+      Principal.root.getChildren().addAll(b1, a1, b2, a2, b3, a3, b4, a4, b5, a5, b6, a6, v1, v2, v3, v4, v5);
+    });
     new Thread(() -> {
       for (int i = 0; i < fluxoBrutoDeBits.length; i++){
         for (int j = 31; j >= 0; j--){
@@ -175,7 +175,7 @@ public class MeioDeComunicao {
             });
           }
           try {
-            Thread.sleep(150);  // Adiciona um pequeno intervalo entre as iteracoes
+            Thread.sleep(50);  // Adiciona um pequeno intervalo entre as iteracoes ALTERAR DEPOIS!!!
           } catch (InterruptedException e) {
             //e.printStackTrace();
           }
@@ -215,7 +215,7 @@ public class MeioDeComunicao {
         arraySinaisBaixos[0].setVisible(false);
       });      
       try {
-        Thread.sleep(150);  // Adiciona um pequeno intervalo entre as iteracoes
+        Thread.sleep(150);  // Adiciona um pequeno intervalo entre as iteracoes, ALTERAR DEPOIS!!!
       } catch (InterruptedException e) {
         //e.printStackTrace();
       }
@@ -256,9 +256,9 @@ public class MeioDeComunicao {
     for (int i = 0; i < fluxoBrutoDeBitsPontoA.length; i++){
       fluxoBrutoDeBitsPontoB[i] = fluxoBrutoDeBitsPontoA[i];
     }
-
     //chama proxima camada
-    receptor.CamadaFisicaReceptora(fluxoBrutoDeBitsPontoB);
+    Principal.receptor.CamadaFisicaReceptora(fluxoBrutoDeBitsPontoB);
+    Principal.semaforoEnviarQuadro.release();
     }).start();
   
   }//fim do metodo MeioDeTransmissao
