@@ -17,6 +17,9 @@ public class Receptor {
   private int tipoDeEnquadramento = 0;
   TextArea text = new TextArea();
   String buffer = "";
+  int qtdBitsTotais = 0;
+  int tipoControleErro = 0;
+  boolean detectouErro = false;
 
   public Receptor() {
     Platform.runLater(() -> {
@@ -64,6 +67,14 @@ public class Receptor {
     this.buffer = "";
   }
 
+  public void setQtdBitsTotais(int qtdBitsTotais) {
+    this.qtdBitsTotais = qtdBitsTotais;
+  }
+
+  public void setTipoControleErro(int n) {
+    this.tipoControleErro = n;
+  }
+
   /*
    * ***************************************************************
    * Metodo: CamadaFisicaReceptora.
@@ -93,9 +104,302 @@ public class Receptor {
         break;
     }// fim do switch/case
      // chama proxima camada
-    CamadaEnlaceDadosReceptoraDesenquadramento(quadro);
+    CamadaEnlaceDadosReceptora(quadro);
     // CamadaDeAplicacaoReceptora(quadro);
   }// fim do metodo CamadaFisicaTransmissora
+
+  public void CamadaEnlaceDadosReceptora(int quadro[]) {
+    CamadaEnlaceDadosReceptoraControleDeErro(quadro);
+    // CamadaEnlaceDadosReceptoraDesenquadramento(quadro);
+    // CamadaEnlaceDadosReceptoraControleDeFluxo();
+  }
+
+  public void CamadaEnlaceDadosReceptoraControleDeErro(int quadro[]) {
+    int[] quadroControleErro = new int[quadro.length];
+    switch (tipoControleErro) {
+      case 0: // bit de paridade par
+        quadroControleErro = CamadaEnlaceDadosReceptoraControleDeErroBitDeParidadePar(quadro);
+        break;
+      case 1: // bit de paridade impar
+        quadroControleErro = CamadaEnlaceDadosReceptoraControleDeErroBitDeParidadeImpar(quadro);
+        break;
+      case 2: // CRC
+        quadroControleErro = CamadaEnlaceDadosReceptoraControleDeErroCRC(quadro);
+        break;
+      case 3: // codigo de hamming
+        quadroControleErro = CamadaEnlaceDadosReceptoraControleDeErroCodigoDeHamming(quadro);
+        break;
+    }// fim do switch/case
+     // System.out.println("Essa e a mensagem no receptor");
+     // for (int i = 0; i < quadroControleErro.length; i++) {
+     // System.out.println(String.format("%32s",
+     // Integer.toBinaryString(quadroControleErro[i])).replace(' ', '0'));
+     // }
+    CamadaEnlaceDadosReceptoraDesenquadramento(quadroControleErro);
+  }// fim do metodo CamadaEnlaceDadosReceptoraControleDeErro
+
+  public int[] CamadaEnlaceDadosReceptoraControleDeErroBitDeParidadePar(int quadro[]) {
+    // implementacao do algoritmo para VERIFICAR SE HOUVE ERRO
+    int[] quadroControleErro = new int[quadro.length];
+    int deslocaQuadroControleErro = 31;
+    int indexQuadroControleErro = 0;
+    int deslocaQuadro = 31;
+    int indexQuadro = 0;
+    int qtdBitsUm = 0;
+    for (int i = 0; i < qtdBitsTotais - 1; i++) {
+      int bit = (quadro[indexQuadro] >> deslocaQuadro) & 1;
+      if (bit == 1) {
+        qtdBitsUm++;
+        quadroControleErro[indexQuadroControleErro] = quadroControleErro[indexQuadroControleErro]
+            | (1 << deslocaQuadroControleErro);
+      }
+      deslocaQuadroControleErro--;
+      if (deslocaQuadroControleErro < 0) {
+        deslocaQuadroControleErro = 31;
+        indexQuadroControleErro++;
+      }
+      deslocaQuadro--;
+      if (deslocaQuadro < 0) {
+        deslocaQuadro = 31;
+        indexQuadro++;
+      }
+      // System.out.println("Mudou o index de quadro");
+      if (indexQuadro >= quadro.length || indexQuadroControleErro >= quadroControleErro.length) {
+        break;
+      }
+    } // fim do for
+    if (qtdBitsUm % 2 == 0) { // se a quantiadade de bits 1 for par, significa que nao detectou erro
+      detectouErro = false;
+      // Mostrar na tela que nao detectou erro
+    } else {
+      detectouErro = true;
+      // Mostrar na tela que detectou erro
+    }
+    deslocaQuadroControleErro--;
+    qtdBitsTotais--;
+
+    return quadroControleErro;
+  }// fim do metodo CamadaEnlaceDadosReceptoraControleDeErroBitDeParidadePar
+
+  public int[] CamadaEnlaceDadosReceptoraControleDeErroBitDeParidadeImpar(int quadro[]) {
+    // implementacao do algoritmo para VERIFICAR SE HOUVE ERRO
+    int[] quadroControleErro = new int[quadro.length];
+    int deslocaQuadroControleErro = 31;
+    int indexQuadroControleErro = 0;
+    int deslocaQuadro = 31;
+    int indexQuadro = 0;
+    int qtdBitsUm = 0;
+    for (int i = 0; i < qtdBitsTotais - 1; i++) {
+      int bit = (quadro[indexQuadro] >> deslocaQuadro) & 1;
+      if (bit == 1) {
+        qtdBitsUm++;
+        quadroControleErro[indexQuadroControleErro] = quadroControleErro[indexQuadroControleErro]
+            | (1 << deslocaQuadroControleErro);
+      }
+      deslocaQuadroControleErro--;
+      if (deslocaQuadroControleErro < 0) {
+        deslocaQuadroControleErro = 31;
+        indexQuadroControleErro++;
+      }
+      deslocaQuadro--;
+      if (deslocaQuadro < 0) {
+        deslocaQuadro = 31;
+        indexQuadro++;
+      }
+      // System.out.println("Mudou o index de quadro");
+      if (indexQuadro >= quadro.length || indexQuadroControleErro >= quadroControleErro.length) {
+        break;
+      }
+    } // fim do for
+
+    if (qtdBitsUm % 2 != 0) { // se a quantiadade de bits 1 for impar, significa que nao detectou erro
+      detectouErro = false;
+      // Mostrar na tela que nao detectou erro
+    } else {
+      detectouErro = true;
+      // Mostrar na tela que detectou erro
+    }
+    deslocaQuadroControleErro--;
+    qtdBitsTotais--;
+
+    return quadroControleErro;
+  }// fim do metodo CamadaEnlaceDadosReceptoraControleDeErroBitDeParidadeImpar
+
+  public int[] CamadaEnlaceDadosReceptoraControleDeErroCRC(int quadro[]) {
+    // implementacao do algoritmo
+    String crc32 = "100000100110000010001110110110111";
+    char[] arrayDeCaracteres = crc32.toCharArray();
+    int crc32Mascara = 0;
+    int deslocaCRC32Mascara = 31;
+    // cria a mascara crc32
+    for (int i = 0; i < arrayDeCaracteres.length - 1; i++) {
+      char caractere = crc32.charAt(i);
+      if (caractere == '1') {
+        crc32Mascara = crc32Mascara | (1 << deslocaCRC32Mascara);
+      }
+      deslocaCRC32Mascara--;
+    } // terminou de criar a mascara do CRC32
+    deslocaCRC32Mascara = 31;
+    // System.out.println("CRC32");
+    // System.out.println(String.format("%32s",
+    // Integer.toBinaryString(crc32Mascara)).replace(' ', '0'));
+
+    int[] quadroResto = new int[quadro.length * 2];
+    int deslocaResto = 31;
+    int indexResto = 0;
+    int deslocaQuadro = 31;
+    int indexQuadro = 0;
+    // coloca os bits de quadro em quadroResto
+    for (int i = 0; i < qtdBitsTotais; i++) {
+      int bit = (quadro[indexQuadro] >> deslocaQuadro) & 1;
+      if (bit == 1) {
+        quadroResto[indexResto] = quadroResto[indexResto] | (1 << deslocaResto);
+      }
+      deslocaResto--;
+      if (deslocaResto < 0) {
+        deslocaResto = 31;
+        indexResto++;
+      }
+      deslocaQuadro--;
+      if (deslocaQuadro < 0) {
+        deslocaQuadro = 31;
+        indexQuadro++;
+      }
+      if (indexQuadro >= quadro.length || indexResto >= quadroResto.length) {
+        break;
+      }
+    } // fim do for
+
+    indexResto = 0;
+    deslocaResto = 31;
+    for (int i = 0; i < qtdBitsTotais; i++) { // faz a divisao modulo 2 (XOR) para descobri o resto
+      int bit = (quadroResto[indexResto] >> deslocaResto) & 1;
+      int deslocaRestoAux = deslocaResto;
+      int indexRestoAux = indexResto;
+      int deslocaCRC32MascaraAux = 31; // Vamos percorrer do bit mais significativo ao menos significativo do CRC32
+
+      if (bit == 1) {
+        for (int j = 0; j < 32; j++) {
+          // System.out.println("Desloca resto: " + deslocaRestoAux + "\nIndex resto aux:
+          // " + indexRestoAux);
+          // System.out.println("Fazendo o XOR");
+
+          int bitQuadroResto = (quadroResto[indexRestoAux] >> deslocaRestoAux) & 1;
+          // System.out.println("Bit do quadro: " + bitQuadroResto);
+
+          int bitCRC = (crc32Mascara >> deslocaCRC32MascaraAux) & 1;
+          // System.out.println("Bit do crc: " + bitCRC);
+
+          int xorResult = bitQuadroResto ^ bitCRC;
+          // System.out.println("XOR " + xorResult);
+
+          // Limpa o bit na posição atual e insere o bit resultante do XOR
+          quadroResto[indexRestoAux] = (quadroResto[indexRestoAux] & ~(1 << deslocaRestoAux))
+              | (xorResult << deslocaRestoAux);
+
+          deslocaRestoAux--;
+          deslocaCRC32MascaraAux--;
+
+          if (deslocaRestoAux < 0) {
+            deslocaRestoAux = 31;
+            indexRestoAux++;
+          }
+          if (deslocaCRC32MascaraAux < 0) {
+            // Fazer XOR com o bit implícito 1 do CRC-32
+            bitQuadroResto = (quadroResto[indexRestoAux] >> deslocaRestoAux) & 1;
+            xorResult = bitQuadroResto ^ 1; // XOR com 1
+            quadroResto[indexRestoAux] = (quadroResto[indexRestoAux] & ~(1 << deslocaRestoAux))
+                | (xorResult << deslocaRestoAux);
+
+            deslocaRestoAux--;
+            if (deslocaRestoAux < 0) {
+              deslocaRestoAux = 31;
+              indexRestoAux++;
+            }
+
+            // Reseta o deslocamento da máscara do CRC para começar do bit mais
+            // significativo novamente
+            deslocaCRC32MascaraAux = 31;
+          }
+        }
+      }
+      deslocaResto--;
+      if (deslocaResto < 0) {
+        deslocaResto = 31;
+        indexResto++;
+      }
+    }
+
+    qtdBitsTotais += 32;
+    deslocaQuadro = 31;
+    indexQuadro = 0;
+    deslocaResto = 31;
+    indexResto = 0;
+
+    for (int i = 0; i < qtdBitsTotais; i++) { // verifica se o resto deu 0, senao deu e pq houve erro
+      int bit = (quadroResto[indexResto] >> deslocaResto) & 1;
+      if (bit == 1) {
+        System.out.println("\nDetectou o erro!\n");
+        detectouErro = true;
+        break;
+      }
+      deslocaResto--;
+      if (deslocaResto < 0) {
+        deslocaResto = 31;
+        indexResto++;
+      }
+      if (indexResto >= quadroResto.length) {
+        break;
+      }
+    } // fim do for
+
+    // System.out.println("Esse é o quadro Resto");
+    // for (int i = 0; i < quadroResto.length; i++){
+    // System.out.println(String.format("%32s",
+    // Integer.toBinaryString(quadroResto[i])).replace(' ', '0'));
+    // }
+
+    qtdBitsTotais -= 64;
+    System.out.println(qtdBitsTotais);
+    indexQuadro = 0;
+    indexResto = 0;
+    deslocaQuadro = 31;
+    deslocaResto = 31;
+    for (int i = 0; i < qtdBitsTotais; i++) { // coloca os bits da carga util de quadro em quadroResto para enviar a
+                                              // mensagem agora SEM o resto
+      int bit = (quadro[indexQuadro] >> deslocaQuadro) & 1;
+      if (bit == 1) {
+        quadroResto[indexResto] = quadroResto[indexResto] | (1 << deslocaResto);
+      }
+      deslocaResto--;
+      if (deslocaResto < 0) {
+        deslocaResto = 31;
+        indexResto++;
+      }
+      deslocaQuadro--;
+      if (deslocaQuadro < 0) {
+        deslocaQuadro = 31;
+        indexQuadro++;
+      }
+      if (indexQuadro >= quadro.length || indexResto >= quadroResto.length) {
+        break;
+      }
+    } // fim do for
+    // System.out.println("Essa e a mensagem SEM o Resto no CRC");
+    // for (int i = 0; i < quadroResto.length; i++) {
+    // System.out.println(String.format("%32s",
+    // Integer.toBinaryString(quadroResto[i])).replace(' ', '0'));
+    // }
+
+    return quadroResto;
+  }// fim do metodo CamadaEnlaceDadosTransmissoraControledeErroCRC
+
+  public int[] CamadaEnlaceDadosReceptoraControleDeErroCodigoDeHamming(int quadro[]) {
+    // implementacao do algoritmo para VERIFICAR SE HOUVE ERRO
+    int[] quadroHamming = quadro;
+    
+    return quadroHamming;
+  }// fim do metodo CamadaEnlaceDadosReceptoraControleDeErroCodigoDeHamming
 
   public void CamadaEnlaceDadosReceptoraDesenquadramento(int quadro[]) {
 
@@ -677,7 +981,9 @@ public class Receptor {
    * Retorno: sem retorno.
    */
   public void AplicacaoReceptora(String buffer) {
-    text.setText(buffer);
+    Platform.runLater(() -> {
+      text.setText(buffer);
+    });
   }// fim do metodo AplicacaoReceptora
 
 }

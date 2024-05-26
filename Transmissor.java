@@ -23,7 +23,7 @@ public class Transmissor {
   private int tipoControleErro;
   private int porcentagemErro;
   private int qtdBitsErrados;
-  //MeioDeComunicao meioDeComunicao = new MeioDeComunicao();
+  // MeioDeComunicao meioDeComunicao = new MeioDeComunicao();
 
   public void tipoDeCodificacao(int n) {
     this.tipoDeCodificacao = n;
@@ -152,7 +152,7 @@ public class Transmissor {
         // TODO Auto-generated catch block
         e.printStackTrace();
       }
-    }).start(); 
+    }).start();
     // CamadaDeEnlaceTransmissoraControleDeErro(quadro);
     // CamadaDeEnlaceTransmissoraControleDeFluxo(quadro);
     // chama proxima camada
@@ -169,23 +169,23 @@ public class Transmissor {
    */
   public void /* int[] */ CamadaEnlaceDadosTransmissoraEnquadramento(int quadro[]) throws InterruptedException {
 
-  // int quadroEnquadrado[] = new int[0]; // mudar depois
+    // int quadroEnquadrado[] = new int[0]; // mudar depois
     switch (tipoDeEnquadramento) {
       case 0: // contagem de caracteres
         // quadroEnquadrado =
         // CamadaEnlaceDadosTransmissoraEnquadramentoContagemDeCaracteres(quadro);
 
         // try {
-          // Platform.runLater(() -> {
-          //   try {
-          //     CamadaEnlaceDadosTransmissoraEnquadramentoContagemDeCaracteres(quadro);
-          //   } catch (InterruptedException e) {
-          //     e.printStackTrace();
-          //   }
-          // });
-          CamadaEnlaceDadosTransmissoraEnquadramentoContagemDeCaracteres(quadro);
+        // Platform.runLater(() -> {
+        // try {
+        // CamadaEnlaceDadosTransmissoraEnquadramentoContagemDeCaracteres(quadro);
+        // } catch (InterruptedException e) {
+        // e.printStackTrace();
+        // }
+        // });
+        CamadaEnlaceDadosTransmissoraEnquadramentoContagemDeCaracteres(quadro);
         // } catch (Exception e) {
-        //   e.printStackTrace();
+        // e.printStackTrace();
         // }
         break;
       case 1: // insercao de bytes
@@ -238,15 +238,17 @@ public class Transmissor {
       if (deslocaQuadroEnquadrado >= 24) {
         int num;
         if (qtdCaracters % 3 == 2 && qtdCaractersInseridos + 2 >= qtdCaracters) {
-          num = contador3.charAt(indiceCaracter); // muda a contagem para 3 caracteres, isto e, a informacao de controle mais 2 caracteres
+          num = contador3.charAt(indiceCaracter); // muda a contagem para 3 caracteres, isto e, a informacao de controle
+                                                  // mais 2 caracteres
           aux = 3;
         } else if (qtdCaracters % 3 == 1 && qtdCaractersInseridos + 1 >= qtdCaracters) {
-                                                  // 
+          //
           aux = 2;
-          num = contador2.charAt(indiceCaracter); // muda a contagem para 2 caracteres, isto e, a informacao de controle mais 1 caracter
+          num = contador2.charAt(indiceCaracter); // muda a contagem para 2 caracteres, isto e, a informacao de controle
+                                                  // mais 1 caracter
         } else {
           aux = 4;
-                                                  // 
+          //
           num = contador4.charAt(indiceCaracter);
         }
         if (num == '1') {
@@ -264,16 +266,17 @@ public class Transmissor {
         // System.out.println("Vai pegar os bits de quadro");
         int bit = (quadro[indexQuadro] >> deslocaQuadro) & 1;
         if (bit == 1) {
-          quadroEnquadrado[indexQuadroEnquadrado] = quadroEnquadrado[indexQuadroEnquadrado] | (1 << deslocaQuadroEnquadrado);
+          quadroEnquadrado[indexQuadroEnquadrado] = quadroEnquadrado[indexQuadroEnquadrado]
+              | (1 << deslocaQuadroEnquadrado);
         }
         deslocaQuadroEnquadrado--;
-        
+
         qtdBitsTotais++;
         if (deslocaQuadroEnquadrado < 0 && aux == 4) {
           // envia quadro chamando o controle de erro;
           Principal.semaforoEnviarQuadro.acquire();
-          CamadaDeEnlaceTransmissoraControleDeErro(quadroEnquadrado); //colocar um acquire depois
-          quadroEnquadrado = new int[1]; 
+          CamadaDeEnlaceTransmissoraControleDeErro(quadroEnquadrado); // colocar um acquire depois
+          quadroEnquadrado = new int[1];
           deslocaQuadroEnquadrado = 31;
           indexQuadroEnquadrado = 0;
         } else if (deslocaQuadroEnquadrado == 7 && aux == 3) {
@@ -284,7 +287,7 @@ public class Transmissor {
         } else if (deslocaQuadroEnquadrado == 15 && aux == 2) {
           // envia quadro chamando o controle de erro;
           Principal.semaforoEnviarQuadro.acquire();
-          CamadaDeEnlaceTransmissoraControleDeErro(quadroEnquadrado); //colocar um acquire depois
+          CamadaDeEnlaceTransmissoraControleDeErro(quadroEnquadrado); // colocar um acquire depois
           quadroEnquadrado = new int[1];
         }
         if (deslocaQuadroEnquadrado < 0) {
@@ -325,8 +328,9 @@ public class Transmissor {
    * Parametros: recebe um quadro do tipo inteiro.
    * Retorno: retorna o quadro enquadrado.
    */
-  public void /* int[] */ CamadaEnlaceDadosTransmissoraEnquadramentoInsercaoDeBytes(int quadro[]) {
-    int[] quadroEnquadrado = new int[quadro.length * 3];
+  public void /* int[] */ CamadaEnlaceDadosTransmissoraEnquadramentoInsercaoDeBytes(int quadro[])
+      throws InterruptedException {
+    int[] quadroEnquadrado = new int[2];
     String flag = "00111111"; // minha flag sera a ? "01001000" seria H de Hugotoso
     String esc = "01000000"; // minha esc sera o @
     int deslocaQuadoEnquadrado = 31;
@@ -489,6 +493,12 @@ public class Transmissor {
           qtdBitsTotais++;
         }
         indiceCaracter = 0;
+        // envia quadro chamando o controle de erro;
+        Principal.semaforoEnviarQuadro.acquire();
+        CamadaDeEnlaceTransmissoraControleDeErro(quadroEnquadrado); // colocar um acquire depois
+        quadroEnquadrado = new int[2];
+        indexQuadroEnquadrado = 0;
+        deslocaQuadoEnquadrado = 31;
       }
     } // fim da insercao dos esc
     /*
@@ -499,7 +509,6 @@ public class Transmissor {
      */
     // return quadroEnquadrado;
     // Chama o controle de Erro
-    CamadaDeEnlaceTransmissoraControleDeErro(quadroEnquadrado);
   }
 
   /*
@@ -509,8 +518,9 @@ public class Transmissor {
    * Parametros: recebe um quadro do tipo inteiro.
    * Retorno: retorna o quadro enquadrado.
    */
-  public void /* int[] */ CamadaEnlaceDadosTransmissoraEnquadramentoInsercaoDeBits(int quadro[]) {
-    int[] quadroEnquadrado = new int[quadro.length * 3];
+  public void /* int[] */ CamadaEnlaceDadosTransmissoraEnquadramentoInsercaoDeBits(int quadro[])
+      throws InterruptedException {
+    int[] quadroEnquadrado = new int[2];
     String flag = "01111110";
     int deslocaQuadoEnquadrado = 31;
     int indexQuadroEnquadrado = 0;
@@ -591,28 +601,52 @@ public class Transmissor {
       // insere a flag a cada 3 caracters
       if ((i + 1) % 24 == 0 && contaCaracteres != qtdCaracters) { // se leu tres caracteres e o proximo nao e o utlimo,
                                                                   // entao insere flag do proximo tambem
-        for (int k = 0; k < 2; k++) {
-          for (int j = 0; j < 8; j++) {
-            char num = flag.charAt(indiceCaracter);
-            if (num == '1') {
-              quadroEnquadrado[indexQuadroEnquadrado] = quadroEnquadrado[indexQuadroEnquadrado]
-                  | (1 << deslocaQuadoEnquadrado);
-            }
-            indiceCaracter++;
-            deslocaQuadoEnquadrado--;
-            if (deslocaQuadoEnquadrado < 0) {
-              deslocaQuadoEnquadrado = 31;
-              indexQuadroEnquadrado++;
-              /*
-               * if (indexQuadroEnquadrado>=quadroEnquadrado.length){
-               * break;
-               * }
-               */
-            }
-            qtdBitsTotais++;
+        for (int j = 0; j < 8; j++) {
+          char num = flag.charAt(indiceCaracter);
+          if (num == '1') {
+            quadroEnquadrado[indexQuadroEnquadrado] = quadroEnquadrado[indexQuadroEnquadrado]
+                | (1 << deslocaQuadoEnquadrado);
           }
-          indiceCaracter = 0;
+          indiceCaracter++;
+          deslocaQuadoEnquadrado--;
+          if (deslocaQuadoEnquadrado < 0) {
+            deslocaQuadoEnquadrado = 31;
+            indexQuadroEnquadrado++;
+            /*
+             * if (indexQuadroEnquadrado>=quadroEnquadrado.length){
+             * break;
+             * }
+             */
+          }
+          qtdBitsTotais++;
+
         }
+        indiceCaracter = 0; // envia o quadro
+        Principal.semaforoEnviarQuadro.acquire();
+        CamadaDeEnlaceTransmissoraControleDeErro(quadroEnquadrado); // colocar um acquire depois
+        quadroEnquadrado = new int[2];
+        indexQuadroEnquadrado = 0;
+        deslocaQuadoEnquadrado = 31;
+        for (int j = 0; j < 8; j++) {
+          char num = flag.charAt(indiceCaracter);
+          if (num == '1') {
+            quadroEnquadrado[indexQuadroEnquadrado] = quadroEnquadrado[indexQuadroEnquadrado]
+                | (1 << deslocaQuadoEnquadrado);
+          }
+          indiceCaracter++;
+          deslocaQuadoEnquadrado--;
+          if (deslocaQuadoEnquadrado < 0) {
+            deslocaQuadoEnquadrado = 31;
+            indexQuadroEnquadrado++;
+            /*
+             * if (indexQuadroEnquadrado>=quadroEnquadrado.length){
+             * break;
+             * }
+             */
+          }
+          qtdBitsTotais++;
+        }
+        indiceCaracter = 0;
       } else if (contaCaracteres == qtdCaracters) { // se chegou no ultimo caracter insere apenas uma flag
         for (int j = 0; j < 8; j++) {
           char num = flag.charAt(indiceCaracter);
@@ -634,6 +668,9 @@ public class Transmissor {
           qtdBitsTotais++;
         }
         indiceCaracter = 0;
+        Principal.semaforoEnviarQuadro.acquire();
+        CamadaDeEnlaceTransmissoraControleDeErro(quadroEnquadrado); // colocar um acquire depois
+        break;
       }
       deslocaQuadro--;
       qtdBitsTotais++;
@@ -645,16 +682,6 @@ public class Transmissor {
         }
       }
     }
-    /*
-     * for (int i = 0; i < quadroEnquadrado.length; i++){
-     * System.out.println(String.format("%32s",
-     * Integer.toBinaryString(quadroEnquadrado[i])).replace(' ', '0'));
-     * }
-     * System.out.println();
-     */
-    // return quadroEnquadrado;
-    // Chama o controle de Erro
-    CamadaDeEnlaceTransmissoraControleDeErro(quadroEnquadrado);
   }
 
   /*
@@ -671,7 +698,7 @@ public class Transmissor {
     // Differencial
     // return quadro;
     // Chama o controle de Erro
-    CamadaDeEnlaceTransmissoraControleDeErro(quadro);
+    CamadaDeEnlaceTransmissoraControleDeErro(quadro); // mudar depois
   }// fim do metodo CamadaEnlaceDadosReceptoraViolacaoDaCamadaFisica
 
   public void CamadaDeEnlaceTransmissoraControleDeErro(int[] quadroEnquadrado) {
@@ -686,10 +713,16 @@ public class Transmissor {
         break;
       case 2: // CRC
         quadroControleErro = CamadaEnlaceDadosTransmissoraControleDeErroCRC(quadroEnquadrado);
+        break;
       case 3: // codigo de Hamming
         quadroControleErro = CamadaEnlaceDadosTransmissoraControleDeErroCodigoDeHamming(quadroEnquadrado);
         break;
     }// fim do switch/case
+     // System.out.println("Essa e a mensagem a ser enviada");
+     // for (int i = 0; i < quadroControleErro.length; i++){
+     // System.out.println(String.format("%32s",
+     // Integer.toBinaryString(quadroControleErro[i])).replace(' ', '0'));
+     // }
     CamadaFisicaTransmissora(quadroControleErro);
   }// fim do medoto CamadaEnlaceDadosTransmissoraControleDeErro
 
@@ -730,7 +763,6 @@ public class Transmissor {
     }
     deslocaQuadroControleErro--;
     qtdBitsTotais++;
-
     return quadroControleErro;
   }// fim do metodo CamadaEnlaceDadosTransmissoraControledeErroBitParidadePar
 
@@ -776,15 +808,237 @@ public class Transmissor {
 
   public int[] CamadaEnlaceDadosTransmissoraControleDeErroCRC(int quadro[]) {
     // implementacao do algoritmo
-    int[] quadroControleErro = new int[quadro.length * 2];
-    return quadroControleErro;
+    String crc32 = "100000100110000010001110110110111";
+    char[] arrayDeCaracteres = crc32.toCharArray();
+    int crc32Mascara = 0;
+    int deslocaCRC32Mascara = 31;
+    // cria a mascara crc32
+    for (int i = 0; i < arrayDeCaracteres.length - 1; i++) {
+      char caractere = crc32.charAt(i);
+      if (caractere == '1') {
+        crc32Mascara = crc32Mascara | (1 << deslocaCRC32Mascara);
+      }
+      deslocaCRC32Mascara--;
+    } // terminou de criar a mascara do CRC32
+    deslocaCRC32Mascara = 31;
+    // System.out.println("CRC32");
+    // System.out.println(String.format("%32s",
+    // Integer.toBinaryString(crc32Mascara)).replace(' ', '0'));
+
+    int[] quadroResto = new int[quadro.length * 2];
+    int deslocaResto = 31;
+    int indexResto = 0;
+    int deslocaQuadro = 31;
+    int indexQuadro = 0;
+    // coloca os bits de quadro em quadroResto
+    for (int i = 0; i < qtdBitsTotais; i++) {
+      int bit = (quadro[indexQuadro] >> deslocaQuadro) & 1;
+      if (bit == 1) {
+        quadroResto[indexResto] = quadroResto[indexResto] | (1 << deslocaResto);
+      }
+      deslocaResto--;
+      if (deslocaResto < 0) {
+        deslocaResto = 31;
+        indexResto++;
+      }
+      deslocaQuadro--;
+      if (deslocaQuadro < 0) {
+        deslocaQuadro = 31;
+        indexQuadro++;
+      }
+      if (indexQuadro >= quadro.length || indexResto >= quadroResto.length) {
+        break;
+      }
+    } // fim do for
+
+    indexResto = 0;
+    deslocaResto = 31;
+    for (int i = 0; i < qtdBitsTotais; i++) {
+      int bit = (quadroResto[indexResto] >> deslocaResto) & 1;
+      int deslocaRestoAux = deslocaResto;
+      int indexRestoAux = indexResto;
+      int deslocaCRC32MascaraAux = 31; // Vamos percorrer do bit mais significativo ao menos significativo do CRC32
+
+      if (bit == 1) {
+        for (int j = 0; j < 32; j++) {
+          // System.out.println("Desloca resto: " + deslocaRestoAux + "\nIndex resto aux:
+          // " + indexRestoAux);
+          // System.out.println("Fazendo o XOR");
+
+          int bitQuadroResto = (quadroResto[indexRestoAux] >> deslocaRestoAux) & 1;
+          // System.out.println("Bit do quadro: " + bitQuadroResto);
+
+          int bitCRC = (crc32Mascara >> deslocaCRC32MascaraAux) & 1;
+          // System.out.println("Bit do crc: " + bitCRC);
+
+          int xorResult = bitQuadroResto ^ bitCRC;
+          // System.out.println("XOR " + xorResult);
+
+          // Limpa o bit na posição atual e insere o bit resultante do XOR
+          quadroResto[indexRestoAux] = (quadroResto[indexRestoAux] & ~(1 << deslocaRestoAux))
+              | (xorResult << deslocaRestoAux);
+
+          deslocaRestoAux--;
+          deslocaCRC32MascaraAux--;
+
+          if (deslocaRestoAux < 0) {
+            deslocaRestoAux = 31;
+            indexRestoAux++;
+          }
+          if (deslocaCRC32MascaraAux < 0) {
+            // Fazer XOR com o bit implícito 1 do CRC-32
+            bitQuadroResto = (quadroResto[indexRestoAux] >> deslocaRestoAux) & 1;
+            xorResult = bitQuadroResto ^ 1; // XOR com 1
+            quadroResto[indexRestoAux] = (quadroResto[indexRestoAux] & ~(1 << deslocaRestoAux))
+                | (xorResult << deslocaRestoAux);
+
+            deslocaRestoAux--;
+            if (deslocaRestoAux < 0) {
+              deslocaRestoAux = 31;
+              indexRestoAux++;
+            }
+
+            // Reseta o deslocamento da máscara do CRC para começar do bit mais
+            // significativo novamente
+            deslocaCRC32MascaraAux = 31;
+          }
+        }
+      }
+      deslocaResto--;
+      if (deslocaResto < 0) {
+        deslocaResto = 31;
+        indexResto++;
+      }
+    }
+
+    // System.out.println("Esse é o quadro");
+    // for (int i = 0; i < quadro.length; i++){
+    // System.out.println(String.format("%32s",
+    // Integer.toBinaryString(quadro[i])).replace(' ', '0'));
+    // }
+    // System.out.println("Esse é o quadro com o Resto");
+    // for (int i = 0; i < quadroResto.length; i++){
+    // System.out.println(String.format("%32s",
+    // Integer.toBinaryString(quadroResto[i])).replace(' ', '0'));
+    // }
+    deslocaQuadro = 31;
+    indexQuadro = 0;
+    deslocaResto = 31;
+    indexResto = 0;
+    // coloca os bits de quadro em quadroResto para enviar a mensagem com o resto
+    for (int i = 0; i < qtdBitsTotais; i++) {
+      int bit = (quadro[indexQuadro] >> deslocaQuadro) & 1;
+      if (bit == 1) {
+        quadroResto[indexResto] = quadroResto[indexResto] | (1 << deslocaResto);
+      }
+      deslocaResto--;
+      if (deslocaResto < 0) {
+        deslocaResto = 31;
+        indexResto++;
+      }
+      deslocaQuadro--;
+      if (deslocaQuadro < 0) {
+        deslocaQuadro = 31;
+        indexQuadro++;
+      }
+      if (indexQuadro >= quadro.length || indexResto >= quadroResto.length) {
+        break;
+      }
+    } // fim do for
+    qtdBitsTotais += 32; // acrescenta 32 bits pq o crc tem 33 bits
+    System.out.println(qtdBitsTotais);
+    // System.out.println("Essa e a mensagem com o Resto no CRC");
+    // for (int i = 0; i < quadroResto.length; i++){
+    // System.out.println(String.format("%32s",
+    // Integer.toBinaryString(quadroResto[i])).replace(' ', '0'));
+    // }
+    return quadroResto;
+
     // usar polinomio CRC-32(IEEE 802)
   }// fim do metodo CamadaEnlaceDadosTransmissoraControledeErroCRC
 
   public int[] CamadaEnlaceDadosTransmissoraControleDeErroCodigoDeHamming(int quadro[]) {
-    // implementacao do algoritmo
-    int[] quadroControleErro = new int[quadro.length * 2];
-    return quadroControleErro;
+    // implementacao do algoritmo // implementacao do algoritmo para VERIFICAR SE
+    // HOUVE ERRO
+    int[] quadroHamming = new int[quadro.length * 3];
+    int indexQuadroHamming = 0;
+    int deselocaQuadroHamming = 31;
+    int indexQuadro = 0;
+    int deslocaQuadro = 31;
+    int expoente = 0;
+    // coloca os bits de quadro em quadroHamming pulando as posicoes onde e potencia
+    // de 2
+    for (int i = 0; i < qtdBitsTotais; i++) {
+      double potencia = Math.pow(2, expoente) - 1;
+      if (i == (int) potencia) { // se a posicao for igual a uma potencia de 2 (menos 1, pq o array comeca de 0), entao apenas pula a posicao
+        expoente++;
+        i--;
+        deselocaQuadroHamming--;
+        if (deselocaQuadroHamming < 0) {
+          deselocaQuadroHamming = 31;
+          indexQuadroHamming++;
+        }
+      } else { // se nao, insere o bit de quadro na devida posicao de quadroHamming
+        int bit = (quadro[indexQuadro] >> deslocaQuadro) & 1;
+        if (bit == 1) {
+          quadroHamming[indexQuadroHamming] = quadroHamming[indexQuadroHamming] | (1 << deselocaQuadroHamming);
+        }
+        deselocaQuadroHamming--;
+        if (deselocaQuadroHamming < 0) {
+          deselocaQuadroHamming = 31;
+          indexQuadroHamming++;
+        }
+        deslocaQuadro--;
+        if (deslocaQuadro < 0) {
+          deslocaQuadro = 31;
+          indexQuadro++;
+        }
+      }
+      if (indexQuadro >= quadro.length || indexQuadroHamming >= quadroHamming.length) {
+        break;
+      }
+
+    } // fim do for
+    
+    System.out.println("Essa e o quadro Hamming sem a informacao de controle");
+    for (int i = 0; i < quadroHamming.length; i++) {
+      System.out.println(String.format("%32s", Integer.toBinaryString(quadroHamming[i])).replace(' ', '0'));
+    }
+
+    indexQuadroHamming = 0;
+    //deselocaQuadroHamming = 31;
+    //inserir os valores dos bits de paridade
+    for (int i = 0; i < 7; i++){
+      double posBitParidade = ((Math.pow(2, i)) - 1);
+      int qtdUm = 0;
+      deselocaQuadroHamming = 31 - (int)posBitParidade;
+      int indexQuadroHammingAux = indexQuadroHamming;
+      for (int j = 0; j < qtdBitsTotais; j++){ //vai verificar todos os bits relacionados ao bit de paridade
+        for (int k = 0; k < (int)(posBitParidade)+1; k++){ //conta
+          int bit = (quadroHamming[indexQuadroHammingAux] >> deselocaQuadroHamming) & 1;
+          if (bit == 1) {
+            qtdUm++;
+          }
+        }
+        deselocaQuadroHamming -= posBitParidade+2; //pula a quantidade necessaria para somar os proximos bits
+        if (deselocaQuadroHamming < 0){
+          deselocaQuadroHamming = 31 - (int)posBitParidade;
+          indexQuadroHammingAux++;
+        }
+        if (indexQuadroHammingAux >= quadroHamming.length){
+          break;
+        }
+      }
+      if (qtdUm%2 == 1) { //insere o 1 na posicao do bit de paridade, pois a quantidade de 1 e impar
+        quadroHamming[indexQuadroHamming] = quadroHamming[indexQuadroHamming] | (1 << (int)posBitParidade);
+      }  
+    }
+
+    System.out.println("Essa e o quadro Hamming");
+    for (int i = 0; i < quadroHamming.length; i++) {
+      System.out.println(String.format("%32s", Integer.toBinaryString(quadroHamming[i])).replace(' ', '0'));
+    }
+    return quadroHamming;
   }// fim do metodo CamadaEnlaceDadosTransmissoraControleDeErroCodigoDehamming
 
   /*
@@ -834,6 +1088,9 @@ public class Transmissor {
     Principal.meioDeComunicao.setTipoDeCodificacao(tipoDeCodificacao);
     Principal.meioDeComunicao.setTipoDeEnquadramento(tipoDeEnquadramento);
     Principal.meioDeComunicao.setQtdBitsTotais(qtdBitsTotais);
+    Principal.meioDeComunicao.setTipoControleErro(tipoControleErro);
+    Principal.meioDeComunicao.setPorcentagemErro(porcentagemErro);
+    Principal.meioDeComunicao.setQtdBistErrados(qtdBitsErrados);
     qtdBitsTotais = 0;
     Principal.meioDeComunicao.meioDeComunicacao(fluxoBrutoDeBits);
   }
