@@ -395,9 +395,116 @@ public class Receptor {
   }// fim do metodo CamadaEnlaceDadosTransmissoraControledeErroCRC
 
   public int[] CamadaEnlaceDadosReceptoraControleDeErroCodigoDeHamming(int quadro[]) {
-    // implementacao do algoritmo para VERIFICAR SE HOUVE ERRO
-    int[] quadroHamming = quadro;
-    
+    // implementacao do algoritmo // implementacao do algoritmo para VERIFICAR SE
+    // HOUVE ERRO
+    int[] quadroHamming = new int[quadro.length * 3];
+    int indexQuadroHamming = 0;
+    int deselocaQuadroHamming = 31;
+    int indexQuadro = 0;
+    int deslocaQuadro = 31;
+    int expoente = 0;
+    // System.out.println("Essa e o quadro com informacao de controle");
+    // for (int i = 0; i < quadro.length; i++) {
+    //   System.out.println(String.format("%32s", Integer.toBinaryString(quadro[i])).replace(' ', '0'));
+    // }
+    // deselocaQuadroHamming = 31;
+    // verificar os valores dos bits de paridade
+    for (int i = 0; i < 7; i++) {
+      double posBitParidade = ((Math.pow(2, i)) - 1);
+      // System.out.println("Pos bit paridade " + posBitParidade);
+      int qtdUm = 0;
+      deslocaQuadro = 31 - (int) posBitParidade;
+      //System.out.println("Desloca quadro: " + deslocaQuadro);
+      if (posBitParidade > 31){
+        deslocaQuadro = 0;
+        indexQuadro = 1;
+      }
+      // System.out.println("Desloca quadro hamming " + deselocaQuadroHamming);
+      int indexQuadroAux = indexQuadro;
+      for (int j = 0; j < qtdBitsTotais * 4; j++) { // vai verificar todos os bits relacionados ao bit de paridade
+        //System.out.println("Parte da posicao " + deslocaQuadro);
+        for (int k = 0; k < (int) (posBitParidade) + 1; k++) { // conta
+          int bit = (quadro[indexQuadroAux] >> deslocaQuadro) & 1;
+          // System.out.println(bit);
+          if (bit == 1) {
+            qtdUm++;
+          }
+          deslocaQuadro--;
+          if (deslocaQuadro < 0) {
+            deslocaQuadro = 31 + deslocaQuadro + 1;
+            indexQuadroAux++;
+          }
+          if (indexQuadroAux >= quadro.length) {
+            break;
+          }
+        }
+        for (int k = 0; k < (int) (posBitParidade) + 1; k++) { // pula
+          deslocaQuadro--;
+          if (deslocaQuadro < 0) {
+            deslocaQuadro = 31 + deslocaQuadro + 1;
+            indexQuadroAux++;
+          }
+          if (indexQuadroAux >= quadro.length) {
+            break;
+          }
+        }
+        // deselocaQuadroHamming -= i+1; //pula a quantidade necessaria para somar os
+        // proximos bits
+        // System.out.println("Pulou para " + deselocaQuadroHamming);
+        // if (deselocaQuadroHamming < 0){
+        // deselocaQuadroHamming = 31 + deselocaQuadroHamming + 1;
+        // indexQuadroHammingAux++;
+        // }
+          if (indexQuadroAux >= quadro.length) {
+            break;
+          }
+      }
+      if (qtdUm % 2 == 1) { // se a quantidadde de 1 (incluindo a informacao de controle) nao for par, entao
+                            // deu erro
+        System.out.println("\n\nDetectou ERRO! na iteracao " + i + "\n\n");
+        detectouErro = true;
+      }
+      //System.out.println(qtdUm);
+    }
+
+    // retira os bits de informacao de controle de quadroHamming
+    indexQuadro = 0;
+    indexQuadroHamming = 0;
+    deslocaQuadro = 31;
+    deselocaQuadroHamming = 31;
+    for (int i = 0; i < qtdBitsTotais + 64; i++) {
+      double potencia = Math.pow(2, expoente) - 1;
+      if (i == (int) potencia) { // se a posicao for igual a uma potencia de 2 (menos 1, pq o array comeca de 0), entao apenas pula a posicao
+        expoente++;
+        deslocaQuadro--;
+        if (deslocaQuadro < 0) {
+          deslocaQuadro = 31;
+          indexQuadro++;
+        }
+      } else { // se nao, insere o bit de quadro na devida posicao de quadroHamming
+        int bit = (quadro[indexQuadro] >> deslocaQuadro) & 1;
+        if (bit == 1) {
+          quadroHamming[indexQuadroHamming] = quadroHamming[indexQuadroHamming] | (1 << deselocaQuadroHamming);
+        }
+        deselocaQuadroHamming--;
+        if (deselocaQuadroHamming < 0) {
+          deselocaQuadroHamming = 31;
+          indexQuadroHamming++;
+        }
+        deslocaQuadro--;
+        if (deslocaQuadro < 0) {
+          deslocaQuadro = 31;
+          indexQuadro++;
+        }
+      }
+      if (indexQuadro >= quadro.length || indexQuadroHamming >= quadroHamming.length) {
+        break;
+      }
+    } // fim do for
+    // System.out.println("Essa e o quadro Hamming");
+    // for (int i = 0; i < quadroHamming.length; i++) {
+    //   System.out.println(String.format("%32s", Integer.toBinaryString(quadroHamming[i])).replace(' ', '0'));
+    // }
     return quadroHamming;
   }// fim do metodo CamadaEnlaceDadosReceptoraControleDeErroCodigoDeHamming
 
