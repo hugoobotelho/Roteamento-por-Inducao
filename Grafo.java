@@ -1,4 +1,14 @@
+/* ***************************************************************
+* Autor............: Hugo Botelho Santana
+* Matricula........: 202210485
+* Inicio...........: 31/08/2024
+* Ultima alteracao.: 05/09/2024
+* Nome.............: Roteomento por Inundacao
+* Funcao...........: Simular o algoritmo de roteamento por inundacao da rede
+*************************************************************** */
+
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.Pane;
@@ -27,14 +37,38 @@ public class Grafo {
     private Integer fim = null; // Variável para armazenar o nó de fim
     private String opcao = "";
 
+    /*
+    * ***************************************************************
+    * Metodo: setOpcao
+    * Funcao: seta a opcao de algoritmo escolhida pelo usuario
+    * Parametros: recebe uma string para informar a opcao
+    * Retorno: void.
+    * ***************************************************************
+    */
     public void setOpcao(String opcao) {
         this.opcao = opcao;
     }
 
+    /*
+    * ***************************************************************
+    * Metodo: getPane
+    * Funcao: retornar o grafoPane
+    * Parametros: sem parametros
+    * Retorno: grafoPane.
+    * ***************************************************************
+    */
     public static Pane getPane() {
         return grafoPane;
     }
 
+   /*
+   * ***************************************************************
+   * Metodo: criarGrafoAPartirDeArquivo.
+   * Funcao: gera o grafo para aparecer na tela a partir do backbone
+   * Parametros: recebe um string do nome do arquivo.
+   * Retorno: retorna um pane que contem o grafo.   
+   * ***************************************************************
+   */
     public Pane criarGrafoAPartirDeArquivo(String arquivo) {
         Pane grafoPane = new Pane();
 
@@ -64,32 +98,64 @@ public class Grafo {
         return grafoPane; // Retorna o Pane contendo o grafo
     }
 
+    /*
+    * ***************************************************************
+    * Metodo: criarNo
+    * Funcao: cria e posiciona um nó no grafo, representado por um botão com uma imagem de roteador.
+    * Parametros: recebe o ID do nó e o Pane onde o nó será adicionado.
+    * Retorno: retorna o objeto Roteador criado.
+    * ***************************************************************
+    */
     private Roteador criarNo(int nodeId, Pane pane) {
         // Distribui os nós de forma circular baseado no total de nós lido do arquivo
         double angle = 2 * Math.PI * (nodeId - 1) / totalNodes;
         double x = CENTER_X + RADIUS * Math.cos(angle);
         double y = CENTER_Y + RADIUS * Math.sin(angle);
-
+    
         // Carrega a imagem do roteador
         Image routerImagem = new Image("/img/router3.png");
         ImageView routerImageView = new ImageView(routerImagem);
-
+    
         // Cria o botão do nó e adiciona a imagem
         Button nodeButton = new Button();
         nodeButton.setGraphic(routerImageView); // Adiciona a imagem ao botão
         nodeButton.setLayoutX(x - NODE_RADIUS);
         nodeButton.setLayoutY(y - NODE_RADIUS);
         nodeButton.setStyle("-fx-background-color: cornflowerblue; -fx-text-fill: white;");
-
+    
         // Ação ao clicar no botão (nó)
         nodeButton.setOnAction(event -> selecionarNo(nodeId, nodeButton));
-
+    
         pane.getChildren().add(nodeButton);
+        
+        // Criação de um Label para exibir a letra do roteador
+        char letraDoRoteador = (char) ('A' + nodeId - 1);  // A partir de 'A'
+    
+        // Calcula a posição do Label fora do círculo, aumentando o raio
+        double labelRadius = RADIUS + 40;  // Aumenta o raio para posicionar o Label fora do círculo
+        double labelX = CENTER_X + labelRadius * Math.cos(angle);
+        double labelY = CENTER_Y + labelRadius * Math.sin(angle);
+    
+        Label nodeLabel = new Label(String.valueOf(letraDoRoteador));
+        nodeLabel.setStyle("-fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold;"); // Estilo do texto com negrito
+        nodeLabel.setLayoutX(labelX - NODE_RADIUS / 2);  // Posiciona o label fora do botão
+        nodeLabel.setLayoutY(labelY - NODE_RADIUS / 2);  // Alinha verticalmente o label com o botão
+    
+        pane.getChildren().add(nodeLabel);
+    
         Roteador no = new Roteador(nodeId, nodeButton, x, y);
         nos.put(nodeId, no);
         return no;
     }
-
+    
+    /*
+    * ***************************************************************
+    * Metodo: criarAresta
+    * Funcao: cria uma aresta (linha) entre dois nós e exibe o valor associado no meio da linha.
+    * Parametros: dois objetos Roteador representando os nós conectados e o valor da aresta.
+    * Retorno: void.
+    * ***************************************************************
+    */
     private void criarAresta(Roteador no1, Roteador no2, int valor, Pane pane) {
         no1.adicionarAdjacencia(no2, valor);
         no2.adicionarAdjacencia(no1, valor);
@@ -108,6 +174,15 @@ public class Grafo {
         pane.getChildren().add(valueLabel);
     }
 
+
+    /*
+    * ***************************************************************
+    * Metodo: selecionarNo
+    * Funcao: manipula a seleção de um no, definindo-o como inicio ou fim.
+    * Parametros: recebe o ID do no e o botao associado ao no.
+    * Retorno: void.
+    * ***************************************************************
+    */
     private void selecionarNo(int nodeId, Button node) {
         if (inicio != null && inicio == nodeId) {
             // Se o nó clicado for o nó de início já selecionado, desmarque-o
@@ -128,6 +203,14 @@ public class Grafo {
         }
     }
 
+    /*
+    * ***************************************************************
+    * Metodo: enviarPacote
+    * Funcao: enviar o pacote baseado na opcao de simulacao selecionada.
+    * Parametros: nenhum.
+    * Retorno: void.
+    * ***************************************************************
+    */
     public void enviarPacote() {
         if (inicio != null && fim != null) {
             switch (opcao) {
@@ -151,22 +234,79 @@ public class Grafo {
         }
     }
 
+    /*
+    * ***************************************************************
+    * Metodo: enviarPacoteTodos
+    * Funcao: simula o envio do pacote para todos os roteadores.
+    * Parametros: nenhum.
+    * Retorno: void.
+    * ***************************************************************
+    */
     public void enviarPacoteTodos() {
         Roteador roteadorInicial = nos.get(inicio);
-        roteadorInicial.enviarPacoteTodos();
+        // roteadorInicial.setPacotesGerados();
+        Roteador roteadorFinal = nos.get(fim);
+        Pacote pacote = new Pacote(roteadorFinal);
+        // Resetar o contador de pacotes gerados antes de iniciar
+        Roteador.setPacotesGerados(0);
+        Principal.pacotesGeradosLabel.setText("Pacotes Gerados: 0");
+        roteadorInicial.enviarPacoteTodos(pacote);
     }
 
+    /*
+    * ***************************************************************
+    * Metodo: enviarPacoteTodosExcetoOQueChegou
+    * Funcao: envia um pacote para todos os roteadores adjacentes, exceto para o roteador de onde ele veio.
+    * Parametros: o roteador de onde o pacote veio e o pacote a ser enviado.
+    * Retorno: void.
+    * ***************************************************************
+    */
     public void enviarPacoteTodosExcetoOQueChegou() {
-        System.out.println("entrou aqui");
         Roteador roteadorInicial = nos.get(inicio);
-        roteadorInicial.enviarPacoteTodosExcetoOQueChegou(roteadorInicial);
+        // roteadorInicial.setPacotesGerados();
+        Roteador roteadorFinal = nos.get(fim);
+        Pacote pacote = new Pacote(roteadorFinal);
+        // Resetar o contador de pacotes gerados antes de iniciar
+        Roteador.setPacotesGerados(0);
+        Principal.pacotesGeradosLabel.setText("Pacotes Gerados: 0");
+        roteadorInicial.enviarPacoteTodosExcetoOQueChegou(roteadorInicial, pacote);
     }
 
+    /*
+    * ***************************************************************
+    * Metodo: enviarPacoteTodosExcetoOQueChegouTTL
+    * Funcao: envia um pacote para todos os roteadores adjacentes, exceto para o roteador de onde ele veio, considerando o TTL (Time To Live).
+    * Parametros: o roteador de onde o pacote veio e o pacote a ser enviado.
+    * Retorno: void.
+    * ***************************************************************
+    */
     public void enviarPacoteTodosExcetoOQueChegouTTL() {
-
+        Roteador roteadorInicial = nos.get(inicio);
+        // roteadorInicial.setPacotesGerados();
+        Roteador roteadorFinal = nos.get(fim);
+        Pacote pacote = new Pacote(roteadorFinal);
+        // Resetar o contador de pacotes gerados antes de iniciar
+        Roteador.setPacotesGerados(0);
+        Principal.pacotesGeradosLabel.setText("Pacotes Gerados: 0");
+        roteadorInicial.enviarPacoteTodosExcetoOQueChegouTTL(roteadorInicial, pacote);
     }
 
+    /*
+    * ***************************************************************
+    * Metodo: enviarPacoteTodosExcetoOQueChegouTTLComProbabilidade
+    * Funcao: envia um pacote para todos os roteadores adjacentes, exceto para o roteador de onde ele veio, considerando o TTL (Time To Live) com uma probabilidade definida.
+    * Parametros: o roteador de onde o pacote veio e o pacote a ser enviado.
+    * Retorno: void.
+    * ***************************************************************
+    */
     public void enviarPacoteOpcao4() {
-
+        Roteador roteadorInicial = nos.get(inicio);
+        // roteadorInicial.setPacotesGerados();
+        Roteador roteadorFinal = nos.get(fim);
+        Pacote pacote = new Pacote(roteadorFinal);
+        // Resetar o contador de pacotes gerados antes de iniciar
+        Roteador.setPacotesGerados(0);
+        Principal.pacotesGeradosLabel.setText("Pacotes Gerados: 0");
+        roteadorInicial.enviarPacoteTodosExcetoOQueChegouTTLComProbabilidade(roteadorInicial, pacote);
     }
 }

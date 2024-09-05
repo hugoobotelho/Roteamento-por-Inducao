@@ -1,3 +1,12 @@
+/* ***************************************************************
+* Autor............: Hugo Botelho Santana
+* Matricula........: 202210485
+* Inicio...........: 31/08/2024
+* Ultima alteracao.: 05/09/2024
+* Nome.............: Roteomento por Inundacao
+* Funcao...........: Simular o algoritmo de roteamento por inundacao da rede
+*************************************************************** */
+
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.scene.Scene;
@@ -17,9 +26,11 @@ public class Principal extends Application {
     public Pane root = new Pane();
     public static Pane grafoPane = new Pane(); // Pane para o grafo
     private Grafo grafo = new Grafo(); // Instancia a classe Grafo
+    public static Label pacotesGeradosLabel = new Label("Pacotes Gerados: 0");
 
     @Override
     public void start(Stage primaryStage) {
+
         // Criar o menu lateral
         VBox menuLateral = new VBox(10);
         menuLateral.setStyle("-fx-padding: 20;");
@@ -91,6 +102,17 @@ public class Principal extends Application {
         root.setStyle("-fx-background-color: #1A1A1A;"); // Cor de fundo da aplicação
         root.getChildren().add(grafoPane);
 
+        
+        // Estilizar o Label
+        pacotesGeradosLabel.setStyle("-fx-text-fill: #FFFFFF; -fx-font-size: 18px;");
+
+        // Posicionar o Label na interface
+        pacotesGeradosLabel.setLayoutX(230); // Alinhado com grafoPane
+        pacotesGeradosLabel.setLayoutY(650);
+
+        // Adicionar o Label ao root
+        root.getChildren().add(pacotesGeradosLabel);
+
         // Exibir o grafo ao iniciar a aplicação
         exibirGrafo();
 
@@ -114,35 +136,43 @@ public class Principal extends Application {
         grafoPane.getChildren().add(novoGrafoPane); // Adiciona o novo grafo ao Pane
     }
 
-    // Método para exibir a janela de informações sobre a aplicação
     private void exibirInformacoesSobre(Window owner) {
-        Stage infoStage = new Stage();
-        infoStage.initModality(Modality.APPLICATION_MODAL);
-        infoStage.initOwner(owner);
-        infoStage.setTitle("Sobre");
-
-        VBox infoLayout = new VBox(10);
-        infoLayout.setStyle("-fx-padding: 20; -fx-background-color: #2E2E2E;"); // Fundo escuro para o modal
-        infoLayout.setAlignment(Pos.CENTER_LEFT); // Alinha os elementos do VBox à esquerda
-
-        Label infoLabel = new Label("Texto informativo.");
-        infoLabel.setStyle("-fx-text-fill: #FFFFFF;");
-
-        Button fecharButton = new Button("Fechar");
-        fecharButton.setStyle("-fx-background-color: #3A3A3A; -fx-text-fill: #FFFFFF; -fx-border-radius: 5px; -fx-background-radius: 5px; -fx-border-color: #5A5A5A;");
-
-        // Aplicar efeito hover no botão Fechar
-        aplicarEfeitoHover(fecharButton);
-
-        // Ação ao clicar no botão "Fechar"
-        fecharButton.setOnAction(event -> infoStage.close());
-
-        infoLayout.getChildren().addAll(infoLabel, fecharButton);
-
-        Scene infoScene = new Scene(infoLayout, 300, 200);
-        infoStage.setScene(infoScene);
-        infoStage.show();
-    }
+      Stage infoStage = new Stage();
+      infoStage.initModality(Modality.APPLICATION_MODAL);
+      infoStage.initOwner(owner);
+      infoStage.setTitle("Sobre");
+  
+      VBox infoLayout = new VBox(10);
+      infoLayout.setStyle("-fx-padding: 20; -fx-background-color: #2E2E2E;"); // Fundo escuro para o modal
+      infoLayout.setAlignment(Pos.CENTER_LEFT); // Alinha os elementos do VBox à esquerda
+  
+      Label infoLabel = new Label(
+        "Opcoes de simulacao:\n" +
+        "- Opcao 1: O pacote sera enviado para todos os roteadores adjacentes ao atual.\n" +
+        "- Opcao 2: O pacote sera enviado para todos, exceto para o roteador de onde ele veio.\n" +
+        "- Opcao 3: O pacote sera enviado a todos exceto o anterior, considerando TTL (Time To Live).\n" +
+        "- Opcao 4: Algoritmo especial, onde o pacote sera enviado conforme uma probabilidade definida.\n\n" +
+        "Ao final da simulacao, o numero total de pacotes gerados sera exibido na parte inferior da tela."
+      );
+      infoLabel.setStyle("-fx-text-fill: #FFFFFF;");
+  
+      Button fecharButton = new Button("Fechar");
+      fecharButton.setStyle("-fx-background-color: #3A3A3A; -fx-text-fill: #FFFFFF; -fx-border-radius: 5px; -fx-background-radius: 5px; -fx-border-color: #5A5A5A;");
+  
+      // Aplicar efeito hover no botão Fechar
+      aplicarEfeitoHover(fecharButton);
+  
+      // Ação ao clicar no botão "Fechar"
+      fecharButton.setOnAction(event -> infoStage.close());
+  
+      infoLayout.getChildren().addAll(infoLabel, fecharButton);
+  
+      // Definir a largura e altura da tela informativa
+      Scene infoScene = new Scene(infoLayout, 800, 300);  // Largura 500 e altura 300
+      infoStage.setScene(infoScene);
+      infoStage.show();
+  }
+  
 
     // Método para aplicar o efeito hover aos botões
     private void aplicarEfeitoHover(Button button) {
